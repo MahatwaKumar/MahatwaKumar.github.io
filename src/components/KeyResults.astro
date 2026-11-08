@@ -1,0 +1,43 @@
+---
+interface Result { value: string; unit?: string; label: string; qualifier?: string }
+interface Props { items: Result[]; compact?: boolean }
+const { items, compact = false } = Astro.props;
+// Animate plain numbers only; values like "87% → 62%" or "1/27" are shown as written.
+const numeric = (v: string) => /^-?[\d,]+(\.\d+)?$/.test(v.replace(/^[+−-]/, (m) => (m === '−' ? '-' : m)));
+---
+<dl class:list={['results', { compact }]}>
+  {items.map((r) => {
+    const sign = r.value.startsWith('+') ? '+' : r.value.startsWith('−') ? '−' : '';
+    const bare = r.value.replace(/^[+−]/, '');
+    const isNum = !compact && numeric(bare);
+    const decimals = isNum && bare.includes('.') ? bare.split('.')[1].length : 0;
+    return (
+      <div class="result">
+        <dt class="label">{r.label}</dt>
+        <dd class="value">
+          <span class="num">
+            {sign}{isNum ? <span data-countup={bare.replace(/,/g, '')} data-decimals={decimals}>{bare}</span> : bare}
+          </span>
+          {r.unit && <span class="unit">{r.unit}</span>}
+        </dd>
+        {r.qualifier && <dd class="qual">{r.qualifier}</dd>}
+      </div>
+    );
+  })}
+</dl>
+
+<style>
+  .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; margin: 0; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .result { background: var(--surface); padding: var(--s5); display: flex; flex-direction: column; }
+  .label { order: 2; color: var(--text-muted); font-size: var(--fs-sm); line-height: 1.4; margin-top: var(--s2); }
+  .value { order: 1; margin: 0; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .num { font: 600 clamp(1.6rem, 1.2rem + 1.6vw, 2.25rem)/1.1 var(--font-mono); letter-spacing: -0.03em; color: var(--text); font-variant-numeric: tabular-nums; }
+  .unit { font: 500 var(--fs-base) var(--font-mono); color: var(--text-muted); }
+  .qual { order: 3; margin: var(--s2) 0 0; font: 500 var(--fs-xs) var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+  .compact { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--radius); }
+  .compact .result { padding: var(--s3); }
+  .compact .num { font-size: 1.15rem; }
+  .compact .unit { font-size: var(--fs-xs); }
+  .compact .label { font-size: var(--fs-xs); margin-top: 2px; }
+  .compact .qual { margin-top: 2px; font-size: 0.68rem; }
+</style>

@@ -1,0 +1,59 @@
+---
+// Interactive chart (Chart.js, loaded only when visible) with a "View data" table toggle.
+import { charts } from '../lib/charts';
+import Icon from './Icon.astro';
+interface Props { id: string; title: string; caption?: string }
+const { id, title, caption } = Astro.props;
+const spec = charts[id];
+if (!spec) throw new Error(`Unknown chart: ${id}`);
+const h = spec.height ?? 340;
+const fmt = (v: string | number) => (typeof v === 'number' ? v.toLocaleString('en-US', { maximumFractionDigits: 6 }) : v);
+---
+<figure class="chart reveal" data-chart={id}>
+  <figcaption class="head">
+    <span class="title">{title}</span>
+    <button type="button" class="toggle" aria-expanded="false" aria-controls={`tbl-${id}`}>
+      <Icon name="table" /><span>View data</span>
+    </button>
+  </figcaption>
+  <div class="canvas-wrap" style={`height:${h}px`}>
+    <canvas role="img" aria-label={`${title}. ${caption ?? ''} The data is available in the table toggle.`}></canvas>
+  </div>
+  <div class="tbl" id={`tbl-${id}`} hidden>
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only">{title}</caption>
+        <thead><tr>{spec.table.head.map((c) => <th scope="col">{c}</th>)}</tr></thead>
+        <tbody>{spec.table.rows.map((r) => <tr>{r.map((c, i) => (i === 0 ? <th scope="row">{fmt(c)}</th> : <td class="num">{fmt(c)}</td>))}</tr>)}</tbody>
+      </table>
+    </div>
+  </div>
+  <p class="foot">{caption && <span>{caption} </span>}<span class="src">Data: {spec.source}</span></p>
+  <script type="application/json" set:html={JSON.stringify(spec)} />
+</figure>
+
+<script>
+  import { initCharts } from '../lib/chart-client';
+  document.addEventListener('astro:page-load', initCharts);
+</script>
+
+<style>
+  .chart { margin: var(--s6) 0; padding: var(--s4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s3); }
+  .title { font-weight: 650; font-size: var(--fs-base); }
+  .toggle {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 var(--s3); border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font: 600 var(--fs-xs) var(--font-sans); cursor: pointer; flex: none;
+  }
+  .toggle:hover { color: var(--text); border-color: var(--border-strong); }
+  .toggle[aria-expanded='true'] { color: var(--accent); border-color: var(--accent); }
+  .toggle :global(svg) { width: 16px; height: 16px; }
+  .canvas-wrap { position: relative; width: 100%; }
+  .tbl .table-wrap { max-height: 420px; overflow: auto; margin: var(--s3) 0 0; }
+  .tbl table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+  .tbl th, .tbl td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  .tbl thead th { position: sticky; top: 0; background: var(--surface-2); font-size: var(--fs-xs); color: var(--text-muted); }
+  .tbl tbody th { font-weight: 500; }
+  .foot { margin: var(--s3) 0 0; font-size: var(--fs-sm); color: var(--text-muted); }
+  .src { font: var(--fs-xs) var(--font-mono); color: var(--text-faint); }
+</style>

@@ -1,0 +1,62 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import { img } from '../lib/images';
+interface Props {
+  src: string;          // "<slug>/<file>.png"
+  alt: string;          // what the figure shows, for screen readers
+  caption: string;      // visible caption
+  size?: 'normal' | 'wide' | 'half';
+}
+const { src, alt, caption, size = 'normal' } = Astro.props;
+const meta = img(src);
+// Full-size version for the lightbox (capped at 2400 px wide).
+const fullW = Math.min(meta.width, 2400);
+const full = await getImage({ src: meta, width: fullW, format: 'webp', quality: 85 });
+const fullH = Math.round((meta.height * fullW) / meta.width);
+---
+<figure class:list={['figure', size, 'reveal']}>
+  <a
+    class="pswp-item"
+    href={full.src}
+    data-pswp-width={fullW}
+    data-pswp-height={fullH}
+    data-caption={caption}
+    aria-label={`Open figure full screen: ${caption}`}
+  >
+    <Picture
+      src={meta}
+      alt={alt}
+      formats={['avif', 'webp']} fallbackFormat="webp"
+      widths={[480, 800, 1200, 1600].filter((w) => w <= meta.width)}
+      sizes={size === 'half' ? '(min-width: 900px) 420px, 92vw' : '(min-width: 1100px) 860px, 92vw'}
+      loading="lazy"
+      decoding="async"
+    />
+    <span class="zoom" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+    </span>
+  </a>
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<script>
+  import { initLightbox } from '../lib/lightbox';
+  document.addEventListener('astro:page-load', initLightbox);
+</script>
+
+<style>
+  .figure { margin: var(--s6) 0; }
+  .figure.wide { max-width: none; }
+  .figure a {
+    position: relative; display: block; background: var(--plate); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; cursor: zoom-in; padding: var(--s2);
+  }
+  .figure :global(img) { width: 100%; height: auto; border-radius: 4px; }
+  .zoom {
+    position: absolute; right: 10px; top: 10px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px;
+    background: rgb(14 23 38 / 0.72); color: #fff; opacity: 0; transition: opacity 0.2s;
+  }
+  .zoom svg { width: 18px; height: 18px; }
+  .figure a:hover .zoom, .figure a:focus-visible .zoom { opacity: 1; }
+  figcaption { margin-top: var(--s2); font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.5; max-width: var(--measure); }
+</style>

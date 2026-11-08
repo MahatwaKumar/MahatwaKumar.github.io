@@ -1,0 +1,71 @@
+---
+import { Picture } from 'astro:assets';
+import { img } from '../lib/images';
+interface Props {
+  before: string; after: string;            // "<slug>/<file>.png"
+  beforeLabel: string; afterLabel: string;
+  beforeAlt: string; afterAlt: string;
+  caption: string;
+  start?: number;                            // initial split, 0-100
+}
+const { before, after, beforeLabel, afterLabel, beforeAlt, afterAlt, caption, start = 50 } = Astro.props;
+const a = img(before);
+const b = img(after);
+const id = `cmp-${before.replace(/[^a-z0-9]/gi, '-')}`;
+---
+<figure class="compare reveal">
+  <div class="stage" style={`--pos:${start}%; aspect-ratio:${a.width}/${a.height}`}>
+    <Picture src={a} alt={beforeAlt} formats={['avif', 'webp']} fallbackFormat="webp" widths={[480, 800, 1200].filter((w) => w <= a.width)} sizes="(min-width: 1100px) 860px, 92vw" loading="lazy" class="img before" />
+    <div class="after-clip" aria-hidden="false">
+      <Picture src={b} alt={afterAlt} formats={['avif', 'webp']} fallbackFormat="webp" widths={[480, 800, 1200].filter((w) => w <= b.width)} sizes="(min-width: 1100px) 860px, 92vw" loading="lazy" class="img after" />
+    </div>
+    <span class="tag tag-l" aria-hidden="true">{beforeLabel}</span>
+    <span class="tag tag-r" aria-hidden="true">{afterLabel}</span>
+    <div class="handle" aria-hidden="true"><span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6-6 6 6 6M15 6l6 6-6 6"/></svg>
+    </span></div>
+    <label class="sr-only" for={id}>Comparison position: left shows {beforeLabel}, right shows {afterLabel}</label>
+    <input id={id} type="range" min="0" max="100" step="1" value={start} aria-valuetext={`${start}% ${beforeLabel}`} />
+  </div>
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<script>
+  function init() {
+    document.querySelectorAll<HTMLElement>('.compare .stage').forEach((stage) => {
+      const input = stage.querySelector<HTMLInputElement>('input')!;
+      if (input.dataset.bound) return;
+      input.dataset.bound = '1';
+      const labels = stage.querySelectorAll('.tag');
+      const update = () => {
+        stage.style.setProperty('--pos', `${input.value}%`);
+        input.setAttribute('aria-valuetext', `${input.value}% ${labels[0]?.textContent ?? ''}`);
+      };
+      input.addEventListener('input', update);
+    });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .compare { margin: var(--s6) 0; }
+  .stage { position: relative; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--border); background: var(--plate); user-select: none; touch-action: pan-y; }
+  .stage :global(.img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .after-clip { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--pos)); }
+  .handle { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2px; margin-left: -1px; background: var(--accent); pointer-events: none; }
+  .handle span {
+    position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); border-radius: 50%;
+    display: grid; place-items: center; background: var(--accent); color: var(--accent-contrast); box-shadow: var(--shadow);
+  }
+  .handle svg { width: 22px; height: 22px; }
+  .tag {
+    position: absolute; top: 12px; padding: 3px 10px; border-radius: 999px; font: 600 var(--fs-xs)/1.5 var(--font-mono);
+    background: rgb(14 23 38 / 0.78); color: #fff; pointer-events: none;
+  }
+  .tag-l { left: 12px; } .tag-r { right: 12px; }
+  input[type='range'] {
+    position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; -webkit-appearance: none; appearance: none;
+  }
+  .stage:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+  figcaption { margin-top: var(--s2); font-size: var(--fs-sm); color: var(--text-muted); max-width: var(--measure); }
+</style>

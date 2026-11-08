@@ -1,0 +1,17 @@
+quantity,value,unit,source_file
+Scaled FIA flap test load,9.6,N,config.yaml + fia_tests.yaml (60 N x 0.4^2)
+Scaled FIA deflection limit,4.0,mm,config.yaml + fia_tests.yaml (10 mm x 0.4)
+"Downforce at 40 m/s, rigid",22.34,N,aeroelastic_pla_print.csv
+"Downforce at 40 m/s, flexible PLA",22.36,N,aeroelastic_pla_print.csv
+"TE deflection under aero load at 40 m/s, PLA",0.235,mm,aeroelastic_pla_print.csv
+"TE deflection under aero load at 40 m/s, CF-nylon",0.170,mm,aeroelastic_cf_nylon_print.csv
+"TE deflection, scaled FIA test, PLA (3 walls, 15%)",0.287,mm,design_sweep.csv
+"TE deflection, scaled FIA test, CF-nylon (3 walls, 15%)",0.207,mm,design_sweep.csv
+"Flex effect on downforce at 40 m/s, PLA",+0.069,%,aeroelastic_pla_print.csv
+"Flex effect on downforce at 80 m/s, PLA",+0.292,%,aeroelastic_pla_print.csv
+"TE deflection under aero load at 80 m/s, PLA",1.005,mm,aeroelastic_pla_print.csv
+Viscous lift factor at 40 m/s,0.787,-,aeroelastic_pla_print.csv
+Design sweep options,30,count,design_sweep.csv
+Largest FIA-test deflection in sweep,0.761,mm,design_sweep.csv
+Smallest margin to FIA limit in sweep,5.3,x,design_sweep.csv
+Largest flex effect in sweep at 80 m/s,+0.487,%,design_sweep.csv

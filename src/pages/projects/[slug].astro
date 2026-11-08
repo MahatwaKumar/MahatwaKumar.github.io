@@ -1,0 +1,152 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { Picture } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+import SoftwareChips from '../../components/SoftwareChips.astro';
+import KeyResults from '../../components/KeyResults.astro';
+import TOC from '../../components/TOC.astro';
+import DownloadCard from '../../components/DownloadCard.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import Icon from '../../components/Icon.astro';
+import { site } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const all = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+  return all.map((p, i) => ({
+    params: { slug: p.data.slug },
+    props: { project: p, prev: all[i - 1] ?? null, next: all[i + 1] ?? null, all },
+  }));
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  prev: CollectionEntry<'projects'> | null;
+  next: CollectionEntry<'projects'> | null;
+  all: CollectionEntry<'projects'>[];
+}
+const { project, prev, next, all } = Astro.props;
+const d = project.data;
+const { Content, headings } = await render(project);
+
+const related = all
+  .filter((p) => p.id !== project.id)
+  .map((p) => ({ p, score: p.data.tags.filter((t) => d.tags.includes(t)).length }))
+  .filter((x) => x.score > 0)
+  .sort((a, b) => b.score - a.score || a.p.data.order - b.p.data.order)
+  .slice(0, 3)
+  .map((x) => x.p);
+
+const url = new URL(`/projects/${d.slug}/`, Astro.site).href;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CreativeWork',
+  name: d.title,
+  headline: d.title,
+  description: d.summary,
+  url,
+  dateCreated: String(d.date.getUTCFullYear()),
+  creativeWorkStatus: d.status === 'complete' ? 'Complete' : 'In progress',
+  keywords: [...d.software, ...d.tags].join(', '),
+  image: new URL(`/og/${d.slug}.png`, Astro.site).href,
+  author: { '@type': 'Person', name: site.name, url: new URL('/about/', Astro.site).href },
+};
+---
+<Base title={d.title} description={d.summary} ogImage={`/og/${d.slug}.png`} ogType="article" jsonLd={jsonLd}>
+  <div data-reading data-pagefind-body>
+    <header class="phead container">
+      <a class="back" href="/#projects"><Icon name="arrow-left" /> All projects</a>
+      <p class="eyebrow">Project {String(d.order).padStart(2, '0')} · {d.date.getUTCFullYear()}</p>
+      <h1 data-pagefind-meta="title">{d.title}</h1>
+      <div class="meta">
+        <StatusBadge status={d.status} size="md" />
+        <SoftwareChips items={d.software} />
+      </div>
+      <p class="lead">{d.summary}</p>
+      <div class="quick">
+        {d.model3d && <a class="btn" href="#model-3d"><Icon name="cube" /> 3D model</a>}
+        {d.downloads.map((f) => <a class="btn" href={f.file} download><Icon name="download" /> {f.label}</a>)}
+        <a class="btn" href="#results"><Icon name="chart" /> Results</a>
+      </div>
+    </header>
+
+    <div class="container hero-wrap">
+      <div class="hero-img">
+        <Picture
+          src={d.heroImage}
+          alt={d.heroAlt}
+          formats={['avif', 'webp']} fallbackFormat="webp"
+          widths={[640, 960, 1280, 1800].filter((w) => w <= d.heroImage.width)}
+          sizes="(min-width: 1260px) 1136px, 94vw"
+          loading="eager"
+          fetchpriority="high"
+          transition:name={`hero-${d.slug}`}
+        />
+      </div>
+      <div class="kr">
+        <h2 class="sr-only">Key results</h2>
+        <KeyResults items={d.keyResults} />
+      </div>
+    </div>
+
+    <div class="container layout">
+      <aside class="side"><TOC headings={headings} /></aside>
+      <article class="prose">
+        <Content />
+        <DownloadCard items={d.downloads.map((x) => ({ label: x.label, file: x.file, description: x.description }))} title="Downloads" />
+      </article>
+    </div>
+  </div>
+
+  <nav class="container pager" aria-label="More projects">
+    {prev ? (
+      <a class="pg prev" href={`/projects/${prev.data.slug}/`}>
+        <span class="k"><Icon name="arrow-left" /> Previous</span><span class="t">{prev.data.shortTitle ?? prev.data.title}</span>
+      </a>
+    ) : <span />}
+    {next ? (
+      <a class="pg next" href={`/projects/${next.data.slug}/`}>
+        <span class="k">Next <Icon name="arrow-right" /></span><span class="t">{next.data.shortTitle ?? next.data.title}</span>
+      </a>
+    ) : <span />}
+  </nav>
+
+  {related.length > 0 && (
+    <section class="container related" aria-labelledby="related-h">
+      <h2 id="related-h">Related projects</h2>
+      <div class="grid">{related.map((p) => <ProjectCard project={p} />)}</div>
+    </section>
+  )}
+</Base>
+
+<style>
+  .phead { padding-top: var(--s6); }
+  .back { display: flex; width: fit-content; align-items: center; gap: var(--s2); min-height: 44px; color: var(--text-muted); text-decoration: none; font-size: var(--fs-sm); margin-bottom: var(--s3); }
+  .back :global(svg) { width: 16px; height: 16px; }
+  .back:hover { color: var(--accent); }
+  h1 { font-size: var(--fs-3xl); max-width: 22ch; margin-bottom: var(--s4); }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); margin-bottom: var(--s5); }
+  .lead { max-width: 72ch; }
+  .quick { display: flex; flex-wrap: wrap; gap: var(--s2); margin: var(--s5) 0 var(--s6); }
+  .hero-wrap { display: grid; gap: var(--s5); }
+  .hero-img { border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); background: var(--plate); max-height: 640px; }
+  .hero-img :global(img) { width: 100%; height: 100%; max-height: 640px; object-fit: contain; }
+  .layout { display: grid; gap: var(--s5); margin-top: var(--s6); }
+  @media (min-width: 1100px) {
+    .layout { grid-template-columns: 220px minmax(0, 1fr); gap: var(--s8); }
+    .side { position: relative; }
+    .side :global(.toc) { position: sticky; top: calc(var(--header-h) + var(--s5)); max-height: calc(100vh - var(--header-h) - 48px); overflow: auto; }
+  }
+  article.prose { max-width: 860px; min-width: 0; }
+  article.prose :global(> p), article.prose :global(> ul), article.prose :global(> ol), article.prose :global(> h2), article.prose :global(> h3) { max-width: var(--measure); }
+  .pager { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); margin-top: var(--s8); padding-top: var(--s6); border-top: 1px solid var(--border); }
+  .pg { display: flex; flex-direction: column; gap: 4px; padding: var(--s4); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; background: var(--surface); min-height: 44px; }
+  .pg:hover { border-color: var(--accent); }
+  .next { text-align: right; align-items: flex-end; }
+  .k { display: inline-flex; align-items: center; gap: 6px; font: 600 var(--fs-xs) var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+  .k :global(svg) { width: 14px; height: 14px; }
+  .t { color: var(--text); font-weight: 600; }
+  .related { margin-top: var(--s8); }
+  .related h2 { font-size: var(--fs-xl); }
+  .grid { display: grid; gap: var(--s5); grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+</style>

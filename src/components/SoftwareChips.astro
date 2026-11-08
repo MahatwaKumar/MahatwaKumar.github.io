@@ -1,0 +1,15 @@
+---
+interface Props { items: string[]; max?: number; label?: string }
+const { items, max, label = 'Software and tools' } = Astro.props;
+const shown = max ? items.slice(0, max) : items;
+const extra = max && items.length > max ? items.length - max : 0;
+---
+<ul class="chips" aria-label={label}>
+  {shown.map((s) => <li class="chip">{s}</li>)}
+  {extra > 0 && <li class="chip more" aria-label={`and ${extra} more`}>+{extra}</li>}
+</ul>
+
+<style>
+  .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .more { color: var(--text-faint); }
+</style>

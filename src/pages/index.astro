@@ -1,0 +1,247 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import ModelViewer from '../components/ModelViewer.astro';
+import Icon from '../components/Icon.astro';
+import { site, filters, githubUrl } from '../lib/site';
+import { skills } from '../lib/resume';
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const counts = Object.fromEntries(filters.map((f) => [f.id, f.id === 'all' ? projects.length : projects.filter((p) => p.data.tags.includes(f.id as never)).length]));
+
+const stats = [
+  { value: projects.length, decimals: 0, unit: '', label: 'Engineering projects, from CFD to robotics' },
+  { value: 589445, decimals: 0, unit: '', label: 'F1 race segment passes analysed for my dirty-air model' },
+  { value: 37, decimals: 0, unit: '%', label: 'Cut in EV drag area from combined shape changes (simulated)' },
+  { value: 1.93, decimals: 2, unit: '×', label: 'F1 downforce from my venturi-floor redesign (simulated)' },
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.name,
+  jobTitle: 'Mechanical Engineering student',
+  email: `mailto:${site.email}`,
+  url: new URL('/', Astro.site).href,
+  sameAs: [site.linkedin, githubUrl].filter(Boolean),
+  alumniOf: { '@type': 'CollegeOrUniversity', name: 'University of California, Los Angeles' },
+  knowsAbout: ['Computational fluid dynamics', 'Aerodynamics', 'Thermal systems', 'Battery cooling', 'CAD', 'Mechatronics', 'Robotics', 'Ansys Fluent', 'SolidWorks'],
+};
+---
+<Base description={site.description} jsonLd={jsonLd}>
+  <div data-pagefind-body>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="intro">
+        <p class="eyebrow">UCLA Mechanical Engineering · Class of 2028</p>
+        <h1 data-pagefind-meta="title:Mahatwa Kumar · Home">{site.name}</h1>
+        <p class="headline">{site.headline}</p>
+        <p class="lead">
+          I'm a Mechanical Engineering junior at UCLA working in CFD and aerodynamics, thermal and battery systems, CAD and mechatronics.
+          On every project I show the set-up behind each result and how I checked it.
+        </p>
+        <div class="cta">
+          <a class="btn btn-primary" href="#projects">View projects <Icon name="arrow-right" /></a>
+          <a class="btn" href="/resume.pdf"><Icon name="file" /> Resume</a>
+          <a class="btn" href="#contact"><Icon name="mail" /> Contact</a>
+        </div>
+      </div>
+      <div class="model">
+        <ModelViewer
+          variant="hero"
+          src="/models/f1-car-aerodynamics-cfd.glb"
+          alt="Interactive 3D model of my F1-style CFD car with the venturi floor. Drag to rotate."
+          cameraOrbit="-55deg 66deg auto"
+          height="clamp(300px, 42vw, 520px)"
+          poster="/models/f1-car-aerodynamics-cfd-poster.webp"
+          loadOn="interaction"
+        />
+        <p class="model-cap">
+          <a href="/projects/f1-car-aerodynamics-cfd/">My F1-style CFD car (v4)</a>, simulated in Ansys Fluent. Drag to rotate.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="glance" aria-labelledby="glance-h" data-pagefind-ignore>
+    <div class="container">
+      <h2 id="glance-h" class="sr-only">At a glance</h2>
+      <dl class="stats">
+        {stats.map((s) => (
+          <div class="stat reveal">
+            <dt>{s.label}</dt>
+            <dd><span data-countup={s.value} data-decimals={s.decimals}>{s.value.toLocaleString('en-US', { minimumFractionDigits: s.decimals })}</span>{s.unit && <span class="u">{s.unit}</span>}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <section class="section" id="projects" aria-labelledby="projects-h">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Selected work · 2026</p>
+          <h2 id="projects-h">Projects</h2>
+        </div>
+        <p class="muted small">Every result is labelled simulated, predicted or measured.</p>
+      </div>
+      <div class="filters" role="group" aria-label="Filter projects by area">
+        {filters.map((f) => (
+          <button type="button" class="fchip" data-filter={f.id} aria-pressed={f.id === 'all' ? 'true' : 'false'}>
+            {f.label} <span class="n" aria-hidden="true">{counts[f.id]}</span>
+          </button>
+        ))}
+      </div>
+      <p class="sr-only" aria-live="polite" id="filter-status"></p>
+      <div class="pgrid" id="pgrid" data-pagefind-ignore>
+        {projects.map((p, i) => <ProjectCard project={p} eager={i < 1} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="skills-h">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Toolbox</p>
+          <h2 id="skills-h">Software & skills</h2>
+        </div>
+      </div>
+      <div class="skills">
+        {skills.map((g) => (
+          <div class="sk card reveal">
+            <h3>{g.group}</h3>
+            <ul class="chiplist">{g.items.map((s) => <li class="chip">{s}</li>)}</ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section contact" id="contact" aria-labelledby="contact-h">
+    <div class="container">
+      <div class="cbox card reveal">
+        <div>
+          <p class="eyebrow">Contact</p>
+          <h2 id="contact-h">Let's talk engineering</h2>
+          <p class="muted">I'm interested in internships in motorsport, EV, aerospace and robotics. Email is the fastest way to reach me.</p>
+          {/* TODO(Mahatwa): add your target internship term (e.g. "Summer 2027") if you want it here. */}
+        </div>
+        <div class="cactions">
+          <div class="email">
+            <a href={`mailto:${site.email}`} class="mono">{site.email}</a>
+            <button type="button" class="icon-btn" data-copy={site.email} aria-label="Copy email address"><Icon name="copy" /></button>
+          </div>
+          <div class="row">
+            <a class="btn btn-primary" href={`mailto:${site.email}`}><Icon name="mail" /> Email me</a>
+            <a class="btn" href={site.linkedin} rel="noopener"><Icon name="linkedin" /> LinkedIn</a>
+            {githubUrl && <a class="btn" href={githubUrl} rel="noopener"><Icon name="github" /> GitHub</a>}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+</Base>
+
+<script>
+  function initFilters() {
+    const grid = document.getElementById('pgrid');
+    if (!grid) return;
+    const chips = [...document.querySelectorAll<HTMLButtonElement>('.fchip')];
+    const cards = [...grid.querySelectorAll<HTMLElement>('.pcard')];
+    const status = document.getElementById('filter-status');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const apply = (id: string, animate: boolean) => {
+      const first = new Map(cards.map((c) => [c, c.getBoundingClientRect()]));
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.filter === id)));
+      let shown = 0;
+      cards.forEach((c) => {
+        const on = id === 'all' || (c.dataset.tags ?? '').split(' ').includes(id);
+        c.hidden = !on;
+        if (on) shown++;
+      });
+      if (status) status.textContent = `${shown} project${shown === 1 ? '' : 's'} shown`;
+      if (!animate || reduce) return;
+      // FLIP: animate cards from their old position to the new one.
+      cards.forEach((c) => {
+        if (c.hidden) return;
+        const a = first.get(c)!;
+        const b = c.getBoundingClientRect();
+        if (a.width === 0) {
+          c.animate([{ opacity: 0, transform: 'scale(0.96)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.2,.7,.2,1)' });
+        } else if (a.left !== b.left || a.top !== b.top) {
+          c.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px)` }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.2,.7,.2,1)' });
+        }
+      });
+    };
+
+    const params = new URLSearchParams(location.search);
+    const initial = params.get('filter') ?? 'all';
+    apply(chips.some((c) => c.dataset.filter === initial) ? initial : 'all', false);
+
+    chips.forEach((chip) => chip.addEventListener('click', () => {
+      const id = chip.dataset.filter!;
+      const url = new URL(location.href);
+      if (id === 'all') url.searchParams.delete('filter'); else url.searchParams.set('filter', id);
+      history.replaceState(history.state, '', url);
+      apply(id, true);
+    }));
+  }
+  document.addEventListener('astro:page-load', initFilters);
+</script>
+
+<style>
+  .hero { padding-block: var(--s6) var(--s7); overflow: hidden; }
+  .hero-grid { display: grid; gap: var(--s5); align-items: center; }
+  @media (min-width: 960px) { .hero-grid { grid-template-columns: 1.05fr 1fr; gap: var(--s6); } .hero { padding-block: var(--s8); } }
+  h1 { margin-bottom: var(--s3); }
+  .headline { font-size: var(--fs-xl); line-height: 1.35; font-weight: 600; color: var(--text); max-width: 30ch; margin-bottom: var(--s4); letter-spacing: -0.01em; }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s5); }
+  .model { position: relative; }
+  .model::before {
+    content: ''; position: absolute; inset: 6% 2% 12%; z-index: -1; border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 16%, transparent), transparent);
+  }
+  .model :global(.mv) { margin: 0; }
+  .model-cap { font-size: var(--fs-sm); color: var(--text-muted); text-align: center; margin: 0; }
+
+  .glance { border-block: 1px solid var(--border); background: var(--surface); }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); margin: 0; }
+  @media (min-width: 900px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  .stat { padding: var(--s5) var(--s4); display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: var(--s2); border-left: 1px solid var(--border); }
+  .stat:nth-child(odd) { border-left: 0; }
+  @media (min-width: 900px) { .stat:nth-child(odd) { border-left: 1px solid var(--border); } .stat:first-child { border-left: 0; } }
+  @media (max-width: 899px) { .stat:nth-child(n + 3) { border-top: 1px solid var(--border); } }
+  .stat dt { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.4; }
+  .stat dd { margin: 0; font: 600 clamp(1.6rem, 1.1rem + 2vw, 2.4rem)/1.1 var(--font-mono); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .u { color: var(--accent); margin-left: 2px; }
+
+  .small { font-size: var(--fs-sm); margin: 0; }
+  .filters { display: flex; flex-wrap: wrap; gap: var(--s2); margin-bottom: var(--s5); }
+  .fchip {
+    display: inline-flex; align-items: center; gap: var(--s2); min-height: 44px; padding: 0 var(--s4); border-radius: 999px;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); font: 600 var(--fs-sm) var(--font-sans); cursor: pointer;
+  }
+  .fchip:hover { color: var(--text); border-color: var(--accent); }
+  .fchip[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+  .fchip .n { font: 500 var(--fs-xs) var(--font-mono); opacity: 0.75; }
+  .pgrid { display: grid; gap: var(--s5); grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+  .pgrid :global(.pcard[hidden]) { display: none; }
+
+  .skills { display: grid; gap: var(--s5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+  .sk { padding: var(--s5); }
+  .sk h3 { font-size: var(--fs-base); margin-bottom: var(--s3); }
+  .chiplist { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chiplist .chip { font-size: var(--fs-sm); padding: 4px 12px; color: var(--text); }
+
+  .cbox { padding: var(--s6); display: grid; gap: var(--s5); align-items: center; background: linear-gradient(135deg, var(--surface), var(--accent-soft)); }
+  @media (min-width: 900px) { .cbox { grid-template-columns: 1.2fr 1fr; padding: var(--s7); } }
+  .cbox h2 { font-size: var(--fs-2xl); }
+  .email { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s2) var(--s2) var(--s4); border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); margin-bottom: var(--s3); }
+  .email a { flex: 1; display: flex; align-items: center; min-height: 44px; color: var(--text); text-decoration: none; font-size: var(--fs-sm); overflow-wrap: anywhere; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--s2); }
+</style>

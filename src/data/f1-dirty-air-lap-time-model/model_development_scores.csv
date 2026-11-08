@@ -1,0 +1,17 @@
+circuit,segment_passes,S_skill,E_share_of_best_fit,verdict
+Austin,47137,0.582,0.999,PASS
+Baku,41030,0.693,0.957,PASS
+Hungaroring,58260,0.696,0.982,PASS
+Imola,29356,0.686,0.928,PASS
+Las Vegas,14314,0.406,1.0,PARTIAL
+Lusail,42005,0.561,0.972,PASS
+Melbourne,17485,0.565,0.964,PASS
+Mexico City,46929,0.645,0.961,PASS
+Monte Carlo,36518,0.626,1.0,PASS
+Montreal,27397,0.744,0.961,PASS
+Monza,27186,0.714,0.967,PASS
+Sakhir,40307,0.736,0.99,PASS
+Singapore,51031,0.728,0.97,PASS
+Spielberg,45594,0.695,0.979,PASS
+Suzuka,18541,0.609,0.999,PASS
+Zandvoort,46355,0.706,0.944,PASS

@@ -1,0 +1,16 @@
+"quantity (full car, 50 m/s, mean of last 100 iterations)",run1,v4
+drag (N),1819,1833
+downforce (N),2541,4909
+CdA (m2),1.188,1.197
+ClA (m2),1.66,3.206
+L/D,1.397,2.678
+front axle downforce (N),2204,3058
+rear axle downforce (N),337,1851
+front share,0.867,0.623
+iterations,1000,600
+spread of drag over last 100 iterations,0.0536,0.0086
+spread of downforce over last 100 iterations,0.1253,0.0198
+mesh cells (half car),839517,781527
+min orthogonal quality,0.103,0.15
+wheels,stationary,"rotating walls, 142 rad/s"
+floor,placeholder flat floor,venturi tunnels + diffuser

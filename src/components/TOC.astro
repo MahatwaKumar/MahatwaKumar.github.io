@@ -1,0 +1,63 @@
+---
+// Sticky table of contents (sidebar on desktop, collapsible on mobile) with active-section highlight.
+interface Heading { depth: number; slug: string; text: string }
+interface Props { headings: Heading[] }
+const items = Astro.props.headings.filter((h) => h.depth === 2);
+---
+<nav class="toc" aria-label="On this page">
+  <details class="toc-details" open>
+    <summary>On this page</summary>
+    <ol>
+      {items.map((h) => <li><a href={`#${h.slug}`} data-toc={h.slug}>{h.text}</a></li>)}
+    </ol>
+  </details>
+</nav>
+
+<script>
+  function init() {
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-toc]')];
+    if (!links.length) return;
+    const details = document.querySelector<HTMLDetailsElement>('.toc-details');
+    const mq = window.matchMedia('(min-width: 1100px)');
+    const sync = () => { if (details) details.open = mq.matches; };
+    sync();
+    mq.addEventListener('change', sync);
+    links.forEach((a) => a.addEventListener('click', () => { if (!mq.matches && details) details.open = false; }));
+
+    const targets = links.map((a) => document.getElementById(a.dataset.toc!)).filter(Boolean) as HTMLElement[];
+    const setActive = () => {
+      const y = window.scrollY + window.innerHeight * 0.25;
+      let cur = targets[0]?.id;
+      for (const t of targets) if (t.offsetTop <= y) cur = t.id;
+      links.forEach((a) => (a.dataset.toc === cur ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')));
+    };
+    setActive();
+    window.addEventListener('scroll', setActive, { passive: true });
+    document.addEventListener('astro:before-swap', () => window.removeEventListener('scroll', setActive), { once: true });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .toc { font-size: var(--fs-sm); }
+  summary {
+    cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; min-height: 44px;
+    font: 600 var(--fs-xs) var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; font-size: 1rem; }
+  details[open] summary::after { content: '−'; }
+  ol { list-style: none; margin: 0; padding: 0 0 var(--s2); border-left: 1px solid var(--border); }
+  a {
+    display: block; padding: 6px var(--s3); margin-left: -1px; border-left: 2px solid transparent; color: var(--text-muted);
+    text-decoration: none; line-height: 1.35;
+  }
+  a:hover { color: var(--text); }
+  a[aria-current='true'] { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+  @media (max-width: 1099px) {
+    .toc { position: sticky; top: var(--header-h); z-index: 50; margin: 0 calc(-1 * var(--s4)); padding: 0 var(--s4);
+      background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+    ol { max-height: 60vh; overflow: auto; }
+  }
+  @media (min-width: 1100px) { summary { pointer-events: none; } summary::after { display: none; } }
+</style>

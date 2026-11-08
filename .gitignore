@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+bundles/
+Mahatwa_Kumar_Resume.pdf
+lighthouse/
+screenshots/
+.env
+.DS_Store
+Thumbs.db

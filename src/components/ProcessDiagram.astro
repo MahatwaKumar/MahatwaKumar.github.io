@@ -1,0 +1,53 @@
+---
+// Engineering process as a flow of steps. Steps marked `planned` are drawn dashed.
+interface Step { title: string; detail: string; tool?: string; planned?: boolean }
+interface Props { steps: Step[]; loop?: string; label?: string }
+const { steps, loop, label = 'My engineering process' } = Astro.props;
+---
+<figure class="process reveal" aria-label={label}>
+  <ol>
+    {steps.map((s, i) => (
+      <li class:list={{ planned: s.planned }}>
+        <span class="n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+        <span class="t">{s.title}{s.planned && <span class="sr-only"> (planned)</span>}</span>
+        <span class="d">{s.detail}</span>
+        {s.tool && <span class="tool">{s.tool}</span>}
+      </li>
+    ))}
+  </ol>
+  {loop && (
+    <figcaption class="loop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      <span><strong>Iterate:</strong> {loop}</span>
+    </figcaption>
+  )}
+  {steps.some((s) => s.planned) && <p class="legend"><span class="sw"></span> dashed = planned, not yet done</p>}
+</figure>
+
+<style>
+  .process { margin: var(--s6) 0; }
+  ol { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); counter-reset: s; }
+  @media (min-width: 900px) {
+    ol { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--s5); }
+    li:not(:last-child)::after {
+      content: ''; position: absolute; top: 28px; right: calc(-1 * var(--s5) + 2px); width: calc(var(--s5) - 4px); height: 2px;
+      background: var(--border-strong);
+    }
+    li:not(:last-child)::before {
+      content: ''; position: absolute; top: 24px; right: calc(-1 * var(--s5) + 1px); border: 5px solid transparent; border-left: 7px solid var(--border-strong); border-right: 0;
+    }
+  }
+  li {
+    position: relative; display: flex; flex-direction: column; gap: 4px; padding: var(--s4); background: var(--surface);
+    border: 1.5px solid var(--border-strong); border-radius: var(--radius);
+  }
+  li.planned { border-style: dashed; background: transparent; }
+  .n { font: 600 var(--fs-xs) var(--font-mono); color: var(--accent); }
+  .t { font-weight: 650; line-height: 1.3; }
+  .d { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.45; }
+  .tool { margin-top: auto; padding-top: var(--s2); font: 500 var(--fs-xs) var(--font-mono); color: var(--text-faint); }
+  .loop { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s3); font-size: var(--fs-sm); color: var(--text-muted); }
+  .loop svg { width: 18px; height: 18px; color: var(--accent); flex: none; }
+  .legend { display: flex; align-items: center; gap: var(--s2); font-size: var(--fs-xs); color: var(--text-faint); margin: var(--s2) 0 0; }
+  .sw { width: 22px; height: 12px; border: 1.5px dashed var(--border-strong); border-radius: 3px; }
+</style>

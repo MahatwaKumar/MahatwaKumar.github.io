@@ -1,0 +1,112 @@
+---
+import Icon from './Icon.astro';
+---
+<dialog class="search-dialog" aria-label="Search the site" transition:persist="search">
+  <form method="dialog" class="search-box" role="search">
+    <Icon name="search" />
+    <label for="site-search" class="sr-only">Search projects and pages</label>
+    <input id="site-search" type="search" placeholder="Search projects, tools, results…" autocomplete="off" spellcheck="false" />
+    <button class="icon-btn" value="close" aria-label="Close search"><Icon name="x" /></button>
+  </form>
+  <div class="results" aria-live="polite"></div>
+  <p class="hint muted"><kbd>↑</kbd> <kbd>↓</kbd> to move · <kbd>Enter</kbd> to open · <kbd>Esc</kbd> to close</p>
+</dialog>
+
+<script>
+  type PFResult = { data: () => Promise<{ url: string; excerpt: string; meta: { title?: string } }> };
+  type Pagefind = { search: (q: string) => Promise<{ results: PFResult[] }>; init?: () => Promise<void> };
+  let pagefind: Pagefind | null = null;
+  let failed = false;
+
+  async function load() {
+    if (pagefind || failed) return pagefind;
+    try {
+      const url = '/pagefind/pagefind.js';
+      pagefind = (await import(/* @vite-ignore */ url)) as Pagefind;
+      await pagefind.init?.();
+    } catch {
+      failed = true;
+    }
+    return pagefind;
+  }
+
+  function setup() {
+    const dialog = document.querySelector<HTMLDialogElement>('.search-dialog');
+    if (!dialog || dialog.dataset.ready) return;
+    dialog.dataset.ready = '1';
+    const input = dialog.querySelector<HTMLInputElement>('input')!;
+    const out = dialog.querySelector<HTMLElement>('.results')!;
+    let seq = 0;
+
+    const open = () => {
+      if (!dialog.open) dialog.showModal();
+      input.select();
+      load();
+    };
+    document.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('[data-open-search]')) open();
+    });
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); open(); }
+    });
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+
+    input.addEventListener('input', async () => {
+      const q = input.value.trim();
+      const id = ++seq;
+      if (!q) { out.innerHTML = ''; return; }
+      const pf = await load();
+      if (id !== seq) return;
+      if (!pf) {
+        out.innerHTML = '<p class="empty">Search is available on the built site (run <code>npm run build</code> then <code>npm run preview</code>).</p>';
+        return;
+      }
+      const res = await pf.search(q);
+      const data = await Promise.all(res.results.slice(0, 8).map((r) => r.data()));
+      if (id !== seq) return;
+      if (!data.length) { out.innerHTML = `<p class="empty">No results for “${q.replace(/[<>&]/g, '')}”.</p>`; return; }
+      out.innerHTML = '<ul role="listbox" aria-label="Results">' + data.map((d, i) =>
+        `<li><a href="${d.url}" role="option" aria-selected="${i === 0}"><span class="t">${d.meta.title ?? d.url}</span><span class="x">${d.excerpt}</span></a></li>`).join('') + '</ul>';
+    });
+
+    input.addEventListener('keydown', (e) => {
+      const links = [...out.querySelectorAll<HTMLAnchorElement>('a')];
+      if (!links.length) return;
+      let i = links.findIndex((a) => a.getAttribute('aria-selected') === 'true');
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        i = (i + (e.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length;
+        links.forEach((a, k) => a.setAttribute('aria-selected', String(k === i)));
+        links[i].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        links[Math.max(0, i)].click();
+      }
+    });
+    out.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('a')) dialog.close(); });
+  }
+  document.addEventListener('astro:page-load', setup);
+</script>
+
+<style>
+  .search-dialog {
+    width: min(640px, calc(100vw - 32px)); max-height: min(70vh, 640px); padding: 0; margin: 10vh auto auto;
+    border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); box-shadow: var(--shadow-lg);
+    overflow: hidden; flex-direction: column;
+  }
+  .search-dialog[open] { display: flex; }
+  .search-dialog::backdrop { background: rgb(8 12 24 / 0.45); backdrop-filter: blur(2px); }
+  .search-box { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s2) var(--s2) var(--s4); border-bottom: 1px solid var(--border); }
+  .search-box > :global(svg) { width: 20px; height: 20px; color: var(--text-muted); flex: none; }
+  .search-box input { flex: 1; min-height: 44px; border: 0; background: transparent; color: var(--text); font: 500 var(--fs-lg) var(--font-sans); outline: none; }
+  .results { overflow-y: auto; padding: var(--s2); }
+  .results :global(ul) { list-style: none; margin: 0; padding: 0; }
+  .results :global(a) { display: block; padding: var(--s3); border-radius: var(--radius); color: var(--text); text-decoration: none; }
+  .results :global(a[aria-selected='true']), .results :global(a:hover) { background: var(--accent-soft); }
+  .results :global(.t) { display: block; font-weight: 600; }
+  .results :global(.x) { display: block; font-size: var(--fs-sm); color: var(--text-muted); }
+  .results :global(mark) { background: transparent; color: var(--accent); font-weight: 650; }
+  .results :global(.empty) { padding: var(--s4); color: var(--text-muted); margin: 0; }
+  .hint { font-size: var(--fs-xs); margin: 0; padding: var(--s2) var(--s4); border-top: 1px solid var(--border); }
+  @media (max-width: 600px) { .hint { display: none; } }
+</style>

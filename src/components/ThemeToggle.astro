@@ -1,0 +1,46 @@
+---
+import Icon from './Icon.astro';
+---
+<button class="icon-btn theme-toggle" type="button" aria-label="Switch to dark theme" title="Toggle light/dark theme">
+  <Icon name="moon" class="i-moon" />
+  <Icon name="sun" class="i-sun" />
+</button>
+
+<script>
+  function current(): 'light' | 'dark' {
+    const set = document.documentElement.getAttribute('data-theme');
+    if (set === 'light' || set === 'dark') return set;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function label(btn: HTMLElement) {
+    btn.setAttribute('aria-label', current() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+  function init() {
+    document.querySelectorAll<HTMLButtonElement>('.theme-toggle').forEach((btn) => {
+      label(btn);
+      btn.onclick = () => {
+        const next = current() === 'dark' ? 'light' : 'dark';
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        // Store only an explicit override; matching the system clears it so the site follows the OS again.
+        try {
+          if ((next === 'dark') === systemDark) localStorage.removeItem('theme');
+          else localStorage.setItem('theme', next);
+        } catch { /* storage unavailable: theme still changes for this page view */ }
+        document.documentElement.setAttribute('data-theme', next);
+        label(btn);
+        document.dispatchEvent(new CustomEvent('themechange', { detail: next }));
+      };
+    });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .theme-toggle :global(.i-sun) { display: none; }
+  :global([data-theme="dark"]) .theme-toggle :global(.i-sun) { display: block; }
+  :global([data-theme="dark"]) .theme-toggle :global(.i-moon) { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .theme-toggle :global(.i-sun) { display: block; }
+    :global(:root:not([data-theme='light'])) .theme-toggle :global(.i-moon) { display: none; }
+  }
+</style>

@@ -1,0 +1,67 @@
+---
+# Copy this file to src/content/projects/<your-slug>.mdx (files starting with "_" are ignored).
+title: 'Project title'
+shortTitle: 'Shorter title for cards (optional)'
+slug: 'your-slug'
+date: 2026-01-01
+status: 'in-progress' # complete | build-in-progress | in-progress
+summary: 'Two or three sentences in the first person: the problem, what I did in which software, and the main result (labelled simulated/predicted/measured).'
+cardSummary: 'One line for the project card.'
+heroImage: '../../assets/projects/your-slug/hero.png'
+heroAlt: 'What the hero image shows.'
+keyResults:
+  - { value: '123', unit: 'N', label: 'What the number is', qualifier: 'simulated' }
+  - { value: '4.5', unit: '%', label: 'What the number is', qualifier: 'predicted' }
+tags: ['cad'] # cfd | thermal | cad | embedded | robotics | data-analysis
+software: ['SolidWorks']
+featured: false
+order: 8
+# model3d:                       # optional: add after running npm run convert-models
+#   src: '/models/your-slug.glb'
+#   poster: '/models/your-slug-poster.webp'
+#   alt: 'Interactive 3D model of …'
+#   cameraOrbit: '35deg 70deg auto'
+#   hotspots: []
+downloads: [] # e.g. - { label: 'Drawing', file: '/files/your-slug/drawing.pdf', description: '…' }
+---
+import Figure from '../../components/Figure.astro';
+import Gallery from '../../components/Gallery.astro';
+import Chart from '../../components/Chart.astro';
+import CompareSlider from '../../components/CompareSlider.astro';
+import ProcessDiagram from '../../components/ProcessDiagram.astro';
+import ProjectModel from '../../components/ProjectModel.astro';
+import SoftwareChips from '../../components/SoftwareChips.astro';
+
+## Overview
+
+The problem in plain words.
+
+## My approach
+
+<ProcessDiagram
+  steps={[
+    { title: 'Design in CAD', detail: 'What I modeled', tool: 'SolidWorks' },
+    { title: 'Mesh', detail: 'Mesh type, size, quality', tool: 'Fluent Meshing' },
+    { title: 'Simulate', detail: 'Models and boundary conditions', tool: 'Ansys Fluent' },
+    { title: 'Analyse', detail: 'What I extracted' },
+    { title: 'Build + test', detail: 'Not done yet', planned: true },
+  ]}
+/>
+
+<Figure src="your-slug/hero.png" alt="What the figure shows" caption="Caption shown under the figure." />
+
+{/* <ProjectModel id="your-slug" caption="…" /> */}
+
+## Results
+
+{/* Charts are defined in src/lib/charts.ts from CSVs in src/data/<slug>/. */}
+
+## How I checked the results
+
+## Challenges & what I learned
+
+## Limitations & next steps
+
+## Software & skills used
+
+<SoftwareChips items={['SolidWorks']} />

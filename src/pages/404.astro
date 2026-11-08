@@ -1,0 +1,22 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+---
+<Base title="Page not found" description="This page does not exist." noindex>
+  <section class="container nf">
+    <p class="code mono" aria-hidden="true">404</p>
+    <h1>This page isn't in the mesh.</h1>
+    <p class="lead">The link may be out of date, or the address mistyped. Try the home page or search the site.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="/"><Icon name="arrow-left" /> Back home</a>
+      <a class="btn" href="/#projects">View projects</a>
+      <button class="btn" type="button" data-open-search><Icon name="search" /> Search</button>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf { min-height: 60vh; display: flex; flex-direction: column; justify-content: center; padding-block: var(--s8); }
+  .code { font-size: clamp(4rem, 3rem + 6vw, 8rem); font-weight: 600; line-height: 1; color: var(--accent); margin: 0 0 var(--s4); letter-spacing: -0.05em; }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s5); }
+</style>

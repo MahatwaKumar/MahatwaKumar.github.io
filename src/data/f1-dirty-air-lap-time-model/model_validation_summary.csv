@@ -1,0 +1,7 @@
+test,result,note
+"development circuits, each held out in turn","15 of 16 pass; mean S 0.65; 589,445 segment passes","model choices used these circuits, so optimistic (model_development_scores.csv)"
+earlier version vs physics with FIA CFD wake figures,mean S 0.59 vs 0.33,model_baselines_earlier_version.csv
+learned (LightGBM) correction on top of the physics,hybrid mean S 0.644 vs physics 0.649 vs pure ML 0.596,machine learning added nothing; from the project's iteration log
+sealed circuits,5 of 7 pass (71%),headline score viewed eight times across checks; from the project's iteration log
+confirmation on never-used sessions (near-final version),"2 of 5 pass, 1 inconclusive",missed the 70% bar fixed in advance
+"stall-gap forecast, 1-4 laps ahead",failed: model 0.48-0.57 s vs FIA curve 0.35-0.44 s,model_stall_forecast_test.csv

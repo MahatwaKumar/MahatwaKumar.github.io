@@ -1,0 +1,7 @@
+baseline,description,mean_S,error_ratio,circuits_S_ge_0.5,fitted_numbers
+zero,no effect,0.0,1.0,0/16,0
+tum,"TUM race-simulation clamp: no time loss, chaser cannot get closer than a minimum gap",0.0,1.0,0/16,0
+pitwall,"rule of thumb: 0.35 s per lap within 1.2 s, spread by clean-air time",0.052408,0.947592,0/16,0
+expfit,"empirical curve A*exp(-g/b) per lap, A and b fitted on other circuits",0.117882,0.882118,0/16,2
+fia,physics with FIA CFD wake figures,0.331555,0.668445,2/16,0
+model,this model (earlier version),0.59467,0.40533,15/16,6

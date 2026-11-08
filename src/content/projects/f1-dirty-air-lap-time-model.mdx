@@ -1,0 +1,142 @@
+---
+title: 'F1 Dirty-Air Lap-Time Model'
+slug: 'f1-dirty-air-lap-time-model'
+date: 2026-01-01
+status: 'complete'
+summary: 'I built a physics-based model of the lap time a following F1 car loses in dirty air (wake loss, a close-following cost and hold-up from the leader) with six global fitted numbers and no per-circuit tuning. Tested on 589,445 segment passes from 2022–2025 races with criteria fixed before scoring, it passed 15 of 16 held-out development circuits and 5 of 7 sealed circuits, but it failed a pre-registered stall-gap forecast, which I investigated.'
+cardSummary: 'Six-parameter physics model of time lost behind another car: 15 of 16 held-out circuits pass, and an honest failed forecast.'
+heroImage: '../../assets/projects/f1-dirty-air-lap-time-model/loss-vs-gap.png'
+heroAlt: 'Line chart of time lost per lap against gap to the car ahead: my model tracks the measured curve closely, while the FIA-based curve sits higher.'
+keyResults:
+  - { value: '15 / 16', unit: '', label: 'Development circuits passed, each held out in turn', qualifier: 'mean S 0.65' }
+  - { value: '5 / 7', unit: '', label: 'Sealed circuits passed', qualifier: 'held out to the end' }
+  - { value: '589,445', unit: '', label: 'Track-segment passes analysed, 2022–2025', qualifier: 'public race data' }
+  - { value: '0.59', unit: 'S', label: 'vs 0.33 for FIA CFD wake figures (earlier version)', qualifier: 'mean skill' }
+tags: ['data-analysis']
+software: ['Python', 'NumPy', 'pandas', 'SciPy', 'LightGBM']
+featured: false
+order: 4
+downloads: []
+---
+import Figure from '../../components/Figure.astro';
+import Chart from '../../components/Chart.astro';
+import ProcessDiagram from '../../components/ProcessDiagram.astro';
+import SoftwareChips from '../../components/SoftwareChips.astro';
+
+## Overview
+
+A faster F1 car often catches the car ahead and then gets stuck about a second behind it. In the leader's wake, the follower loses downforce, so it is slower in the corners; the tow and DRS give some time back on the straights. Where those effects balance, the "stall gap", decides whether a team should keep attacking or change strategy, for example by pitting early to undercut.
+
+Public tools either ignore this or use a single rule of thumb. I asked how well simple physics, fitted to public timing data, can predict the time lost, and where it breaks down.
+
+<div class="note">
+
+This is an analysis of public timing data, not an aerodynamic measurement. Race timing cannot fully separate the wake from other close-range effects. This project is not affiliated with Formula 1 or the FIA.
+
+</div>
+
+## My approach
+
+<ProcessDiagram
+  steps={[
+    { title: 'Race data', detail: 'Public timing, lap and telemetry data, races 2022–2025' },
+    { title: 'Gaps & segments', detail: 'Lap-by-lap gaps for every pair of cars; corners and straights from real DRS zones' },
+    { title: 'Physics model', detail: 'Wake loss + close-following cost + hold-up: 6 global numbers' },
+    { title: 'Validation', detail: 'Leave-one-circuit-out, sealed circuits, confirmation set, frozen versions' },
+    { title: 'Stall test', detail: 'Forecast fixed in advance; it failed, and I investigated why' },
+  ]}
+/>
+
+### Cleaning the data
+
+I computed lap-by-lap gaps for every pair of cars from public timing, lap and telemetry data (OpenF1, FastF1, Jolpica and the TracingInsights archive). I removed safety-car laps, pit laps, blue flags and lapped traffic, and split each circuit into corners and straights using the real DRS zones.
+
+### The model
+
+For each track segment at gap *g*, the time lost is the sum of three physical effects:
+
+<div class="table-wrap">
+
+| Term | What it represents |
+|---|---|
+| Δt<sub>wake</sub>(g) | Lost downforce slows the corners, while the tow and DRS give time back on the straights |
+| κ<sub>p</sub> · t<sub>clean</sub> · w<sub>s</sub> · exp(−g / 0.35 s) | A close-following acceleration cost |
+| Δt<sub>leader</sub> · exp(−g / 1.0 s) | Hold-up inherited from the leader |
+
+</div>
+
+The model has **six global fitted numbers and no per-circuit tuning**. The stall gap g\* is where the lap-time loss equals the chaser's pace advantage: P(g\*) = Δ<sub>pace</sub>. I did all the fitting and analysis in Python.
+
+### How I kept the testing honest
+
+I scored the model with **S**, the share of a no-effect baseline's error that the model removes. A circuit passes at S ≥ 0.5. I fixed the test design before scoring:
+
+- each of the 16 development circuits held out in turn;
+- 7 circuits sealed until the end;
+- a confirmation test on sessions never used, with a pass bar set in advance;
+- frozen model versions (tagged), so I could not quietly change a model after seeing a score;
+- comparison against public and simple baselines, and against a LightGBM machine-learning correction.
+
+## Results
+
+<div class="table-wrap">
+
+| Test | Result |
+|---|---|
+| Development circuits, each held out in turn | **15 of 16 pass**, mean S **0.65**, 589,445 segment passes |
+| Physics vs physics with FIA CFD wake figures (earlier version) | mean S **0.59 vs 0.33** |
+| LightGBM correction on top of the physics | S 0.644 vs 0.649 for physics alone (pure ML 0.596): no gain |
+| Sealed circuits | **5 of 7 pass** |
+| Confirmation on never-used sessions | **2 of 5 pass**, 1 inconclusive: missed the 70% bar |
+| Stall-gap forecast, 1–4 laps ahead | **Failed**: error 0.48–0.57 s vs 0.35–0.44 s for the FIA curve |
+
+</div>
+
+<Chart id="lt-loss" title="Time lost per lap vs gap to the car ahead" caption="My model follows the measured loss closely; a curve built from FIA CFD wake figures over-predicts it at short gaps." />
+
+<Chart id="lt-circuits" title="Skill on each development circuit (held out in turn)" caption="15 of 16 circuits clear the 0.5 pass mark; Las Vegas (0.41) is the one partial." />
+
+<Chart id="lt-baselines" title="Physics model vs simpler baselines" caption="Earlier model version. A rule of thumb and a fitted empirical curve remove little error; the FIA-wake physics removes a third; my model removes about 59%." />
+
+### The failed forecast, and what I found
+
+Even though my model matches the measured loss curve better, the FIA curve forecasts stall gaps better. I ran a follow-up investigation, which only partly explains why:
+
+- Simple extrapolation with no wake physics did as well as the FIA curve or better (0.32–0.38 s), so the FIA curve's win does not validate it either.
+- Faster chasers do stall closer, as the model predicts (ρ = −0.47 over 83 plateaus).
+- About 75% of plateaus are queues (1,153 of 1,539), where the car ahead is itself stuck.
+- Lap-to-lap gap changes respond to the gap far less than any of the curves predict. I don't know the cause yet.
+
+<Chart id="lt-stall" title="Stall-gap forecast error (pre-registered test)" caption="The test I fixed in advance. My model's error is the highest at every horizon, so the forecast failed." />
+
+## How I checked the results
+
+- **Out-of-sample testing:** leave-one-circuit-out, sealed circuits and a confirmation set, all with criteria fixed before scoring.
+- **Baselines:** a no-effect baseline, a race-simulation clamp, a rule of thumb, a fitted empirical curve and physics with FIA CFD wake figures, so the model's skill has a reference.
+- **Machine-learning check:** a LightGBM correction on top of the physics added nothing (S 0.644 vs 0.649), which suggests the physics captures what the data can support.
+- **Unit tests:** 11 tests on the physics module pass.
+- **Frozen versions:** every scored model was tagged, so results cannot drift after the fact.
+
+## Challenges & what I learned
+
+- **A good fit is not a good forecast.** The model matches the measured loss curve closely but loses the stall-gap forecast. Fitting the average loss and predicting when a gap stops shrinking are different problems, and I only learned that because I fixed the test in advance.
+- **I looked at the sealed score too often.** The sealed result (5 of 7) had its headline score viewed eight times across checks, so it is weaker evidence than it looks. The confirmation test on never-used sessions (2 of 5) is the cleanest result, and it missed the bar.
+- **More model is not always better.** Adding a machine-learning correction did not improve the score, so I kept the six-parameter physics.
+- **A CFD wake did not help.** I tried replacing the fitted wake with a wake from my [F1 car CFD](/projects/f1-car-aerodynamics-cfd/). The follower *gained* downforce, which failed the gate I set in advance, so I left the model unchanged.
+
+## Limitations & next steps
+
+- Race timing cannot isolate the wake from other close-range effects, so the fitted wake is not a direct aerodynamic measurement.
+- Performance on new circuits is unproven: the cleanest test (confirmation) passed 2 of 5.
+- The model fails to forecast stall gaps, and that disagreement is only partly explained.
+- A second version improved development-circuit error slightly (0.351 to 0.347), but it is development-only and untested on held-out data.
+
+**Planned:** a one-shot test of the frozen model on 2026 races with the pass bar set first, and an interactive strategy dashboard.
+
+<Figure src="f1-dirty-air-lap-time-model/stall-forecast.png" alt="Line chart of mean stall-gap forecast error against laps ahead for my model, the FIA curve, a constant guess and gap-stays-as-now." caption="Original figure of the stall-gap forecast test: my model's error is the highest at every horizon." />
+
+## Software & skills used
+
+<SoftwareChips items={['Python', 'NumPy', 'pandas', 'SciPy (optimize, stats)', 'LightGBM', 'Matplotlib', 'OpenF1 · FastF1 · Jolpica data']} />
+
+**Skills:** physics-based modelling, parameter fitting, leave-one-group-out validation, pre-registered tests, bootstrap intervals, baseline comparison, honest reporting of a failed prediction.

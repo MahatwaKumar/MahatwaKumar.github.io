@@ -1,0 +1,5 @@
+laps_ahead,plateaus,races,model_error_s,fia_curve_error_s,constant_guess_error_s,gap_stays_as_now_error_s
+1,828,61,0.481,0.346,0.447,0.372
+2,770,60,0.513,0.375,0.44,0.395
+3,717,58,0.525,0.396,0.428,0.429
+4,530,56,0.568,0.444,0.453,0.492

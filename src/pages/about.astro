@@ -1,0 +1,162 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { site, githubUrl } from '../lib/site';
+import { education, experience, skills, publication, honors } from '../lib/resume';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const resumeKb = Math.round(fs.statSync(path.join(process.cwd(), 'public/resume.pdf')).size / 1024);
+---
+<Base title="About" description="About Mahatwa Kumar: Mechanical Engineering at UCLA, research and design experience, skills, publication and resume.">
+  <div data-pagefind-body>
+  <section class="container about-head">
+    <div class="intro">
+      <p class="eyebrow">About</p>
+      <h1 data-pagefind-meta="title:About · Mahatwa Kumar">Hi, I'm Mahatwa.</h1>
+      <p class="lead">
+        I'm a junior in Mechanical Engineering at UCLA's Samueli School of Engineering. I work mainly in CFD and aerodynamics,
+        thermal and battery systems, and CAD-driven mechanical and mechatronic design.
+      </p>
+      <p>
+        I like projects where simulation has to earn its place: I set up the model, check it against hand calculations, mesh
+        studies or energy balances, and say clearly what is simulated, what is predicted and what is still to be built. This
+        year that has meant F1 and EV aerodynamics in Ansys Fluent, a battery cold plate and its test rig, and two robotics
+        designs in SolidWorks.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="/resume.pdf" download><Icon name="download" /> Download resume <span class="sz">PDF · {resumeKb} KB</span></a>
+        <a class="btn" href={`mailto:${site.email}`}><Icon name="mail" /> Email</a>
+        <a class="btn" href={site.linkedin} rel="noopener"><Icon name="linkedin" /> LinkedIn</a>
+        {githubUrl && <a class="btn" href={githubUrl} rel="noopener"><Icon name="github" /> GitHub</a>}
+      </div>
+    </div>
+    <!-- TODO(Mahatwa): replace this placeholder with your photo: add src/assets/mahatwa.jpg and swap the div for <Image src={photo} alt="Mahatwa Kumar" />. -->
+    <div class="photo" role="img" aria-label="Photo placeholder">
+      <span aria-hidden="true">MK</span>
+    </div>
+  </section>
+
+  <section class="container block" aria-labelledby="edu-h">
+    <h2 id="edu-h"><Icon name="cap" /> Education</h2>
+    <div class="card edu">
+      <div class="row">
+        <div>
+          <h3>{education.school}</h3>
+          <p class="muted">{education.degree}</p>
+        </div>
+        <div class="right">
+          <p class="mono">{education.grad}</p>
+          <p class="muted mono">GPA {education.gpa}</p>
+        </div>
+      </div>
+      <p class="cw"><strong>Coursework:</strong> {education.coursework.join(', ')}</p>
+    </div>
+  </section>
+
+  <section class="container block" aria-labelledby="exp-h">
+    <h2 id="exp-h">Experience</h2>
+    <ol class="timeline">
+      {experience.map((e) => (
+        <li class="reveal">
+          <div class="when mono">{e.when}</div>
+          <div class="card item">
+            <h3>{e.role}</h3>
+            <p class="org">{e.org} <span class="muted">· {e.place}</span></p>
+            <ul>{e.points.map((p) => <li>{p}</li>)}</ul>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="container block" aria-labelledby="sk-h">
+    <h2 id="sk-h">Technical skills</h2>
+    <div class="skills">
+      {skills.map((g) => (
+        <div class="card sk">
+          <h3>{g.group}</h3>
+          <ul class="chiplist">{g.items.map((s) => <li class="chip">{s}</li>)}</ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="container block two" aria-label="Publication and honours">
+    <div>
+      <h2>Publication</h2>
+      <div class="card pad">
+        <p>{publication.text}</p>
+        <a href={publication.doi} rel="noopener" class="doi"><Icon name="external" /> DOI: 10.47611/jsrhs.v10i4.1924</a>
+      </div>
+    </div>
+    <div>
+      <h2>Honours</h2>
+      <ul class="card pad honors">{honors.map((h) => <li>{h}</li>)}</ul>
+    </div>
+  </section>
+
+  <section class="container block" aria-labelledby="cv-h">
+    <div class="section-head">
+      <h2 id="cv-h">Resume</h2>
+      <a class="btn" href="/resume.pdf" download><Icon name="download" /> Download PDF</a>
+    </div>
+    <div class="resume-frame">
+      <object data="/resume.pdf#view=FitH" type="application/pdf" title="Resume of Mahatwa Kumar (PDF preview)" aria-label="Resume preview">
+        <p class="fallback">Your browser can't show the PDF here. <a href="/resume.pdf">Open the resume PDF</a>.</p>
+      </object>
+    </div>
+  </section>
+  </div>
+</Base>
+
+<style>
+  .about-head { display: grid; gap: var(--s6); padding-top: var(--s7); align-items: center; }
+  @media (min-width: 900px) { .about-head { grid-template-columns: 1.6fr 1fr; } }
+  .intro p { max-width: var(--measure); }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s5); }
+  .sz { font: var(--fs-xs) var(--font-mono); opacity: 0.8; }
+  .photo {
+    aspect-ratio: 4 / 5; max-width: 340px; width: 100%; justify-self: center; border-radius: var(--radius-lg);
+    border: 1px dashed var(--border-strong); background: linear-gradient(160deg, var(--surface-2), var(--accent-soft));
+    display: grid; place-items: center; color: var(--accent); font: 700 4rem var(--font-mono);
+  }
+  .block { margin-top: var(--s8); }
+  .block h2 { display: flex; align-items: center; gap: var(--s2); font-size: var(--fs-xl); }
+  .block h2 :global(svg) { width: 24px; height: 24px; color: var(--accent); }
+  .card.edu, .card.pad { padding: var(--s5); }
+  .row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s3); }
+  .row h3 { margin-bottom: var(--s1); font-size: var(--fs-lg); }
+  .row p { margin: 0; }
+  .right { text-align: right; }
+  @media (max-width: 600px) { .right { text-align: left; } }
+  .cw { margin: var(--s4) 0 0; font-size: var(--fs-sm); color: var(--text-muted); }
+  .timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s4); position: relative; }
+  .timeline > li { display: grid; gap: var(--s2); }
+  @media (min-width: 800px) {
+    .timeline::before { content: ''; position: absolute; left: 150px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+    .timeline > li { grid-template-columns: 130px 1fr; gap: var(--s7); }
+    .when { text-align: right; padding-top: var(--s5); position: relative; }
+    .when::after { content: ''; position: absolute; right: -27px; top: calc(var(--s5) + 6px); width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--bg); }
+  }
+  .when { font-size: var(--fs-sm); color: var(--accent); font-weight: 600; }
+  .item { padding: var(--s5); }
+  .item h3 { font-size: var(--fs-base); margin-bottom: var(--s1); }
+  .org { font-weight: 550; margin-bottom: var(--s3); font-size: var(--fs-sm); }
+  .item ul { margin: 0; padding-left: 1.2em; color: var(--text-muted); font-size: var(--fs-sm); }
+  .item li { margin-bottom: var(--s2); }
+  .skills { display: grid; gap: var(--s4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+  .sk { padding: var(--s5); }
+  .sk h3 { font-size: var(--fs-base); }
+  .chiplist { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chiplist .chip { font-size: var(--fs-sm); color: var(--text); padding: 4px 12px; }
+  .two { display: grid; gap: var(--s6); }
+  @media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; } }
+  .doi { display: inline-flex; align-items: center; gap: var(--s2); min-height: 44px; font-family: var(--font-mono); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+  .doi :global(svg) { width: 16px; height: 16px; flex: none; }
+  .honors { list-style: none; margin: 0; display: grid; gap: var(--s3); }
+  .honors li { padding-left: var(--s4); border-left: 3px solid var(--accent); }
+  .resume-frame { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-2); }
+  .resume-frame object { display: block; width: 100%; height: min(1100px, 130vw); }
+  .fallback { padding: var(--s6); text-align: center; }
+</style>

@@ -1,0 +1,30 @@
+part,group,qty_in_assembly,solid_volume_cm3,unit_mass_g,total_mass_g
+01_base,PLA structure,1,868.14,538.2,538.2
+02_lazy_susan_bearing,Bearing (catalogue mass),1,30.26,85.0,85.0
+03_turntable_yoke,PLA structure,1,287.26,178.1,178.1
+04_upper_arm,PLA structure,1,299.63,185.8,185.8
+05_upper_arm_panels,PLA structure,1,12.29,7.6,7.6
+06_forearm_lower,PLA structure,1,211.9,131.4,131.4
+07_forearm_upper,PLA structure,1,196.1,121.6,121.6
+08_wrist_link,PLA structure,1,29.78,18.5,18.5
+09_palm_hub,PLA structure,1,88.96,55.2,55.2
+10_swivel_ring,PLA structure,1,12.59,7.8,7.8
+11_finger_mount,PLA structure,4,2.16,1.3,5.2
+12_finger_proximal,PLA structure,4,5.63,3.5,14.0
+13_finger_middle,PLA structure,4,4.44,2.8,11.2
+14_finger_claw,PLA structure,4,3.72,2.3,9.2
+15_tip_pad_TPU,TPU pad,4,0.22,0.3,1.2
+16_ring_turntable,PETG ring,1,5.35,5.4,5.4
+17_ring_shoulder,PETG ring,1,2.51,2.5,2.5
+18_ring_elbow,PETG ring,1,1.36,1.4,1.4
+19_ring_forearm_roll,PETG ring,1,2.39,2.4,2.4
+20_ring_hand_roll,PETG ring,1,2.07,2.1,2.1
+21_ring_camera,PETG ring,1,0.36,0.4,0.4
+M1_DS3218_base_yaw,Servo (catalogue mass),1,33.89,60,60
+M2_DS3235_shoulder,Servo (catalogue mass),1,33.89,65,65
+M3_DS3218_elbow,Servo (catalogue mass),1,33.89,60,60
+M4_MG996R_forearm_roll,Servo (catalogue mass),1,33.89,55,55
+M5_MG996R_wrist_pitch,Servo (catalogue mass),1,33.89,55,55
+M6_MG90S_hand_roll,Servo (catalogue mass),1,6.74,13.4,13.4
+M7_MG90S_finger,Servo (catalogue mass),4,6.74,13.4,53.6
+M8_MG90S_swivel,Servo (catalogue mass),1,6.74,13.4,13.4

@@ -1,0 +1,10 @@
+car,cda_m2,condition,wh_per_km,range_km,aero_share
+Phase 1 placeholder (Cd 0.25 x 2.16 m2),0.54,100 km/h steady,134.17,558.99,0.59013
+Phase 1 placeholder (Cd 0.25 x 2.16 m2),0.54,120 km/h steady,168.17,445.96,0.67796
+Phase 1 placeholder (Cd 0.25 x 2.16 m2),0.54,EPA HWFET cycle,118.05,635.34,0.4497
+CFD baseline,0.72151,100 km/h steady,160.78,466.46,0.65797
+CFD baseline,0.72151,120 km/h steady,206.5,363.2,0.73772
+CFD baseline,0.72151,EPA HWFET cycle,135.26,554.51,0.52441
+CFD combined_best,0.45373,100 km/h steady,121.52,617.18,0.54746
+CFD combined_best,0.45373,120 km/h steady,149.96,500.13,0.63884
+CFD combined_best,0.45373,EPA HWFET cycle,109.92,682.32,0.4058

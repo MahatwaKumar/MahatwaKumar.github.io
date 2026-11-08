@@ -1,0 +1,176 @@
+---
+title: 'Wingflex: Aeroelastic F1 Front-Wing Flap'
+shortTitle: 'Wingflex: Aeroelastic Front-Wing Flap'
+slug: 'wingflex'
+date: 2026-01-01
+status: 'in-progress'
+summary: 'I predicted how much a 3D-printed, 40%-scale F1 front-wing flap bends under ground-effect aerodynamic load, and how that bending changes downforce, with a two-way coupled aero-structural model I built in Python: a panel method and vortex lattice with a ground plane, a thin-walled section model and beam finite elements. The predicted deflection in the scaled FIA test is 0.287 mm against a 4.0 mm limit, so a printed flap this size is far too stiff to act as a flexi-wing. I designed a bench test modelled on the FIA test to check the frozen prediction.'
+cardSummary: 'Two-way coupled aero-structural model of a 40%-scale printed flap: 0.287 mm predicted deflection vs a 4.0 mm scaled FIA limit.'
+heroImage: '../../assets/projects/wingflex/wing-test-parts.png'
+heroAlt: 'Renders of the printed wing test parts: the teal flap, two support ridges and the load pads.'
+keyResults:
+  - { value: '0.287', unit: 'mm', label: 'Trailing-edge deflection, scaled FIA test (limit 4.0 mm)', qualifier: 'predicted · PLA' }
+  - { value: '22.36', unit: 'N', label: 'Downforce at 40 m/s, 3D with viscous correction', qualifier: 'predicted' }
+  - { value: '+0.29', unit: '%', label: 'Downforce added by flex at 80 m/s', qualifier: 'predicted · PLA' }
+  - { value: '34', unit: 'tests', label: 'Checks against exact or known answers, all passing', qualifier: 'verification' }
+tags: ['cad', 'data-analysis']
+software: ['Python', 'NumPy', 'SciPy', 'NeuralFoil']
+featured: false
+order: 5
+model3d:
+  src: '/models/wingflex.glb'
+  poster: '/models/wingflex-poster.webp'
+  alt: 'Interactive 3D model of the printed 40%-scale front-wing flap with its two end blocks.'
+  label: 'Flap'
+  cameraOrbit: '30deg 65deg auto'
+downloads:
+  - { label: 'Flap drawing', file: '/files/wingflex/wingflex-flap-drawing.pdf', description: 'Dimensioned general arrangement of the printed flap (A4)' }
+---
+import Figure from '../../components/Figure.astro';
+import Gallery from '../../components/Gallery.astro';
+import Chart from '../../components/Chart.astro';
+import ProcessDiagram from '../../components/ProcessDiagram.astro';
+import ProjectModel from '../../components/ProjectModel.astro';
+import SoftwareChips from '../../components/SoftwareChips.astro';
+
+## Overview
+
+Racing wings make downforce, and they bend under it. The FIA limits the bending with static tests: a load pad pushes on one spot of the wing, and the deflection must stay under a limit.
+
+Real airflow pushes on the whole surface at once, with a different size and shape of load, so a wing can pass the static test and still behave differently on track. I built a model that predicts deflection from the real aerodynamic load, designed a physical test to check it, and used it to answer how flex changes downforce.
+
+<div class="note">
+
+**Status:** the model, the test design and the print files are complete. The physical tests have not been run, so every result here is a **prediction**, made with placeholder material stiffness.
+
+</div>
+
+## My approach
+
+<ProcessDiagram
+  steps={[
+    { title: 'Design point', detail: 'LS(1)-0413MOD section, 8°, h/c 0.5, 40 m/s' },
+    { title: 'Aero loads', detail: '2D panel method + 3D vortex lattice with ground effect; viscous correction', tool: 'Python · NeuralFoil' },
+    { title: 'Structure', detail: 'Thin-walled printed section (EI, GJ) + bending-torsion beam FE', tool: 'Python' },
+    { title: 'Blind prediction', detail: 'Two-way coupled loop; frozen before testing', tool: 'Python' },
+    { title: 'Coupon + bench tests', detail: 'Measure real stiffness, then the flap; ±15% acceptance gate', planned: true },
+  ]}
+  loop="bending and twist change the aero load, which changes the bending; I iterate to convergence with under-relaxation."
+/>
+
+### Test article and scaling
+
+The flap uses the NASA LS(1)-0413MOD section with a 100 mm chord and a 210 mm span between mounts (a 230 mm printed part with two 10 mm end blocks). It runs inverted at 8° incidence, at a ride height of h/c = 0.5, with a design speed of 40 m/s.
+
+The scale factor is 0.4, assuming a 0.25 m full-size flap chord. At equal dynamic pressure, force scales with s² and deflection with s. So the FIA flap test (60 N with a 10 mm limit in the 2026 regulations) becomes **9.6 N with a 4.0 mm limit** for this model.
+
+<Gallery>
+  <Figure src="wingflex/flap-section.png" alt="The inverted aerofoil section drawn 50 mm above a moving ground, with the 40 m/s flow direction." caption="The flap section at the design point: inverted at 8°, 50 mm (h/c = 0.5) above a moving ground." size="half" />
+  <Figure src="wingflex/pressure-distribution.png" alt="Pressure coefficient along the chord for the suction and pressure sides, with a strong suction peak near the leading edge." caption="Predicted pressure distribution at the design point (2D inviscid panel method with a ground image). The suction peak is over-predicted without viscosity." size="half" />
+</Gallery>
+
+### Aerodynamics
+
+- **2D:** a Hess-Smith panel method (source panels plus a uniform vortex, with a Kutta condition) and a mirror-image ground plane, tabulated over incidence and ride height.
+- **Viscous correction:** from NeuralFoil, giving η ≈ 0.79 at 40 m/s (Re ≈ 2.7 × 10⁵).
+- **3D:** a vortex-ring lattice with modelled endplates and ground images, for the spanwise load distribution.
+
+<Chart id="wf-ground" title="Ground effect: downforce vs ride height" caption="Predicted 2D section coefficients (inviscid). Results below h/c ≈ 0.2 are not physical because the model has no stall." />
+
+### Structure
+
+- **Section model:** perimeter walls (3 × 0.45 mm) plus 15% infill at a reduced efficiency. This gives the bending stiffness EI, torsional stiffness GJ (Bredt) and the shear centre of the closed thin-walled section.
+- **Beam finite elements:** Euler-Bernoulli bending plus St Venant torsion, 44 elements with 3 DOF per node and consistent nodal loads.
+- **Coupling:** bending moves the flap toward the ground and twist changes its incidence; both feed back into the aero load. I also checked static torsional divergence as a generalised eigenproblem, K v = q A v.
+- **Uncertainty bands:** ±15% material stiffness, ±20% shear modulus and an infill efficiency from 0 to 0.6.
+
+<ProjectModel id="wingflex" caption="The printed flap (230 mm with its end blocks), ready to print on its trailing edge." />
+
+## Results
+
+All values are **predicted** with placeholder stiffness: typical printed PLA (E = 3.0 GPa) and the CF-nylon datasheet value (E = 4.15 GPa). I will recompute them from measured coupon values before the bench test.
+
+<div class="table-wrap">
+
+| Quantity (predicted) | PLA | CF-nylon |
+|---|---|---|
+| Downforce at 40 m/s, 3D with viscous correction | 22.36 N (CL 1.09) | 22.36 N |
+| Trailing-edge deflection, scaled FIA test (9.6 N) | 0.287 mm (band 0.224–0.386) | 0.207 mm (band 0.162–0.279) |
+| Margin to the 4.0 mm scaled limit | 14× | 19× |
+| Trailing-edge deflection under aero load, 40 m/s | 0.235 mm | 0.170 mm |
+| Trailing-edge deflection under aero load, 80 m/s | 1.005 mm | 0.726 mm |
+| Flex effect on downforce, 40 / 80 m/s | +0.069% / +0.29% | +0.050% / +0.21% |
+| Bending / torsional stiffness EI / GJ | 15.0 / 17.2 N·m² | 20.8 / 23.8 N·m² |
+| Shear centre / centre of pressure | 0.281c / 0.331c | same |
+| Static torsional divergence | none | none |
+
+</div>
+
+**What the predictions say**
+
+1. **The air load is larger but bends the flap less.** At 40 m/s the predicted aero load (22.4 N) is about 2.3 times the scaled FIA test load, yet it gives only 0.82 times the trailing-edge deflection. It is spread over the span and centred at 33% chord, near the stiffer leading edge, while the test pad sits near the trailing edge.
+2. **Flex adds a little downforce.** Bending moves the flap toward the ground, where ground effect raises downforce. Twist lowers the incidence and takes some back, because the centre of pressure (0.331c) is behind the shear centre (0.281c). The same arrangement rules out torsional divergence.
+3. **A printed flap this size is too stiff to be a "flexi-wing".** All 30 wall and infill combinations pass the scaled test by at least 5.3×. A useful flexi-wing would need thinner or longer parts, or a composite layup with bend-twist coupling.
+
+<Chart id="wf-deflection" title="Predicted trailing-edge deflection vs speed" caption="Predicted under the real aero load. Load grows with speed squared, so at 80 m/s the deflection is about 4.3× the 40 m/s value." />
+
+<Chart id="wf-flex" title="Downforce gained from flex vs speed" caption="Predicted. Even at 80 m/s the flex effect is under 0.3%." />
+
+<Chart id="wf-sweep" title="Design sweep against the scaled FIA limit" caption="Predicted, 30 designs: 1–6 walls × 0–40% infill. The largest deflection is 0.761 mm, still 5.3× under the 4.0 mm limit." />
+
+<Gallery>
+  <Figure src="wingflex/spanwise-load.png" alt="Two plots across the span: aero load per unit span (peaked in the middle), and deflection of the leading and trailing edges for PLA and CF-nylon." caption="Predicted spanwise load and deflection at 40 m/s." size="half" />
+  <Figure src="wingflex/bench-predictions.png" alt="Bar charts of predicted dial-gauge readings per kilogram, for the point-load and distributed-load tests, PLA and CF-nylon, with uncertainty whiskers." caption="The frozen blind predictions for each dial gauge (mm per kg), with material and infill uncertainty bands." size="half" />
+</Gallery>
+
+## How I checked the results
+
+34 checks pass, each comparing a part of the model with an exact or known answer:
+
+<div class="table-wrap">
+
+| Check | Tolerance |
+|---|---|
+| Panel-method lift vs exact Kármán-Trefftz aerofoil (0°, 4°, 8°) | within 1% |
+| Panel-method Cp vs exact solution | max error < 0.05 |
+| Cusped Joukowski aerofoil, panel refinement | error falls with refinement, < 2% at the finest mesh |
+| Ground plane: flow through the ground | normal velocity < 10⁻¹⁰ |
+| Ground effect far from the ground vs free air | within 0.5% |
+| Panel-count convergence | change < 1% |
+| Beam FE: simply supported, cantilever and torsion cases | within 10⁻⁶ of closed form |
+| Aero-to-beam load transfer: force, moment, torque | conserved within 0.1% |
+| Coupled loop: a very stiff flap gives the rigid result | within 10⁻⁵ |
+| Coupled loop: forced divergence follows 1/(1 − q/q_div) | within 15% |
+| Bench analysis on synthetic data with known EI × 0.8, GJ × 1.1 | recovers both within 3% and 5% |
+
+</div>
+
+Separately, I checked the vortex-lattice method against the Helmbold lift-slope formula for flat plates (within 2–5%).
+
+## Challenges & what I learned
+
+- **My first load estimate was nine times too high.** The 2D inviscid result suggested about 85 N of aero load, roughly 9× the scaled FIA point load. Adding 3D tip loss (×0.64 even with endplates) and the viscous correction (×0.79) brought it down to about 2.3×, and spreading the load over the span brought the deflection down to 0.82× the FIA test. I learned not to draw conclusions from a 2D upper bound.
+- **The span had to fit the printer.** I started with a 400 mm span but cut it to 210 mm between mounts, so the flap prints in one piece on a 250 mm bed. A joint at mid-span would have sat at the peak bending moment.
+- **I chose a support the model can trust.** I mounted the flap simply supported on two ridges 220 mm apart: free to rotate in bending, held in twist. That makes the test check my model, not an unknown clamp stiffness.
+- **Validation data was hard to get.** I couldn't get Tyrrell 026 aerofoil coordinates or Zerihan & Zhang ground-effect pressure data, so I used the NASA LS(1)-0413MOD section and listed the comparison as still to do.
+
+## Limitations & next steps
+
+- **No physical test data yet.** The coupons, dogbones and wing test are designed and ready to print, but have not been run. Nothing here is measured or validated.
+- **Placeholder material stiffness.** Printed parts are often less stiff than datasheets.
+- **Inviscid aerodynamics plus a free-air viscous factor.** Suction peaks are over-predicted, there is no stall, and results below h/c ≈ 0.2 are not physical.
+- **Scaling assumes a 0.25 m full-size flap chord**, which is not published. I used the 10 mm limit from the 2026 regulations as transcribed; a 2025 technical directive reduced the flap limit to 3 mm.
+- The wing sits on two ridges, standing in for the car's endplate mounts.
+
+**Planned:** three-point-bend coupons in six print orientations (ASTM D790 style) and tensile dogbones (ASTM D638 Type I); then the flap bench test with an FIA-style point load at 80% chord and a four-pad distributed load at the computed centre of pressure, read by dial gauges at both edges, against a ±15% acceptance gate. Later: a high-fidelity check (OpenFOAM, CalculiX and preCICE) and a carbon-fibre flap with bend-twist coupling.
+
+<Gallery>
+  <Figure src="wingflex/flap-drawing.png" alt="Dimensioned drawing of the flap: plan view with support positions and gauge points, and section A-A." caption="Flap general arrangement: plan view with the 220 mm support centres and gauge positions, and the LS(1)-0413MOD section." size="half" />
+  <Figure src="wingflex/material-test-parts.png" alt="Renders of the printed material-test specimens: tensile dogbone, grip plates and covers, extensometer clip, anvil and gauge spacer." caption="Printed material-test specimens and fixtures I designed for the coupon tests." size="half" />
+</Gallery>
+
+## Software & skills used
+
+<SoftwareChips items={['Python', 'NumPy', 'SciPy', 'NeuralFoil', 'pandas', 'Matplotlib', 'Parametric STL design for FDM']} />
+
+**Skills:** potential-flow panel method, vortex-lattice method, ground-effect modelling, thin-walled section analysis, beam finite elements, two-way aeroelastic coupling, divergence analysis, uncertainty bands, test design (ASTM D790/D638 style, FIA C3.18 style), verification against analytic solutions, blind prediction.

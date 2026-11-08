@@ -1,0 +1,168 @@
+---
+title: 'EV Aerodynamics for Range'
+slug: 'ev-aerodynamics-range'
+date: 2026-01-01
+status: 'complete'
+summary: 'I modeled a generic mid-size EV and eleven shape variants in CadQuery, meshed them in Fluent Meshing and simulated them in Ansys Fluent (steady RANS, k-ω SST, 120 km/h), then fed the drag into a road-load range model. Combining the winning changes cut simulated drag area by 37%, worth a predicted +137 km per charge at 120 km/h, and most of the gain came from the underbody.'
+cardSummary: 'Twelve CFD configurations of a generic EV: the combined changes cut drag area 37%, a predicted +137 km per charge at 120 km/h.'
+heroImage: '../../assets/projects/ev-aerodynamics-range/combined-front-iso.png'
+heroAlt: 'Grey CAD render of the combined low-drag EV body from the front three-quarter view, with covered wheels.'
+keyResults:
+  - { value: '−37.1', unit: '%', label: 'Drag area Cd·A, all winning changes combined', qualifier: 'simulated' }
+  - { value: '+137', unit: 'km', label: 'Range per charge at 120 km/h (363 → 500 km)', qualifier: 'predicted' }
+  - { value: '0.208', unit: 'Cd', label: 'Combined car (baseline 0.314)', qualifier: 'simulated' }
+  - { value: '0.6', unit: '%', label: 'Baseline Cd·A spread across 3 meshes', qualifier: 'mesh study' }
+tags: ['cfd', 'cad', 'data-analysis']
+software: ['Ansys Fluent', 'Fluent Meshing', 'CadQuery', 'Python']
+featured: true
+order: 2
+model3d:
+  src: '/models/ev-aerodynamics-range.glb'
+  poster: '/models/ev-aerodynamics-range-poster.webp'
+  alt: 'Interactive 3D model of the combined low-drag EV body, with a toggle to the baseline car.'
+  label: 'Combined car'
+  compareSrc: '/models/ev-aerodynamics-range-baseline.glb'
+  compareLabel: 'Baseline'
+  cameraOrbit: '-50deg 72deg auto'
+downloads: []
+---
+import Figure from '../../components/Figure.astro';
+import Gallery from '../../components/Gallery.astro';
+import Chart from '../../components/Chart.astro';
+import CompareSlider from '../../components/CompareSlider.astro';
+import ProcessDiagram from '../../components/ProcessDiagram.astro';
+import ProjectModel from '../../components/ProjectModel.astro';
+import SoftwareChips from '../../components/SoftwareChips.astro';
+
+## Overview
+
+At motorway speed, most of an electric car's battery energy goes into pushing air aside: on this car, 74% of it at 120 km/h. A lower-drag shape buys range without a bigger, heavier and costlier battery.
+
+Car makers know the individual tricks: smooth floors, diffusers, wheel covers, camera pods instead of mirrors. What is rarely shown in one consistent study is how many kilometres each is worth, and whether they add up. I set out to build that chain, from shape to drag to kilometres, with every step checked.
+
+<div class="note">
+
+All results are **simulated predictions** for a generic body. No physical test data exists yet. Absolute Cd applies to this body only; the differences between variants are the result.
+
+</div>
+
+## My approach
+
+<ProcessDiagram
+  steps={[
+    { title: 'Design in CAD', detail: 'DrivAer-sized fastback + 11 variants, each changing one idea', tool: 'CadQuery' },
+    { title: 'Mesh', detail: 'Poly-hexcore with prism layers; 0.38, 0.62 and 0.86 M cells', tool: 'Fluent Meshing' },
+    { title: 'Simulate', detail: 'Steady RANS, k-ω SST, 120 km/h, moving ground, rotating wheels', tool: 'Ansys Fluent' },
+    { title: 'Check', detail: 'Convergence, y+, wall quality, CAD-to-mesh area, medium-mesh re-runs', tool: 'Ansys Fluent' },
+    { title: 'Range model', detail: 'Road load at steady speed and over the EPA HWFET cycle', tool: 'Python' },
+  ]}
+  loop="the coarse-mesh screen ranked the variants; the baseline and the five largest changes were re-run on the medium mesh."
+/>
+
+### Geometry: one idea per variant
+
+I modeled a DrivAer-sized fastback (4.61 m long, 2.30 m² frontal area) in CadQuery as a loft through superellipse sections. The underbody (rough or smooth), rear diffuser, boat tail, mirrors or camera pods, open or covered wheels, and ride height are all parameters. Each variant changes exactly one idea, so a difference in drag can be traced to one cause. Before export, I checked every body for valid closed solids, no interference, and minimum edge and gap sizes.
+
+<Figure src="ev-aerodynamics-range/configurations.png" alt="Grid of twelve grey CAD renders: the baseline and eleven variants, each labelled with its name and frontal area." caption="All twelve configurations, each labelled with its frontal area." />
+
+<ProjectModel id="ev-aerodynamics-range" caption="Switch between the baseline and the combined car to see the smooth floor, diffuser, covered wheels and camera pods." />
+
+### CFD set-up
+
+- **Domain:** half car with a symmetry plane, blockage 1.2%. Moving ground and rotating-wall wheels.
+- **Turbulence:** k-ω SST with wall functions, targeting y+ 30–100.
+- **Meshes:** poly-hexcore with prism layers at 0.38, 0.62 and 0.86 million cells, all under the Ansys Student limit of 1,048,576.
+- **Convergence:** judged on the force monitors, not residuals. I checked Cd and Cl every 50 iterations over a 200-iteration window. A run counted as converged when the swing was below 0.5% of Cd, or the window mean moved less than 0.1% between windows.
+- **Campaign:** every configuration on the coarse mesh; the baseline and the five largest changes again on the medium mesh.
+
+### Range model
+
+I turned drag into range with a road-load model (aero, rolling resistance, inertia), plus drivetrain, regen and accessory terms. I ran it at steady speed and integrated it over the EPA HWFET highway cycle's published 1 Hz speed trace. The vehicle is 1,900 kg with 75 kWh usable.
+
+## Results
+
+The baseline on the coarse mesh has Cd 0.314, Cd·A 0.7215 m² and Cl 0.27. It uses 206 Wh/km and gets 363 km per charge at 120 km/h.
+
+<Chart id="ev-drag-change" title="Drag change by configuration" caption="Simulated, 120 km/h. Changes smaller than the ±0.6% mesh noise (smaller arch gap, both boat tails) cannot be told apart from zero." />
+
+<CompareSlider
+  before="ev-aerodynamics-range/baseline-rear-under.png"
+  after="ev-aerodynamics-range/combined-rear-under.png"
+  beforeLabel="Baseline"
+  afterLabel="Combined"
+  beforeAlt="Underside of the baseline car: rough block-pattern floor and open five-spoke wheels."
+  afterAlt="Underside of the combined car: smooth floor, rear diffuser and covered wheels."
+  caption="Drag the handle: baseline underside (rough floor, open wheels) vs the combined car (smooth floor, 5° diffuser, covered wheels)."
+/>
+
+**The underbody is where the range is.** A smooth floor with a gentle diffuser is worth about three times as much as wheel covers and ten times as much as lowering the car. The changes act on different parts of the flow, so they add up almost without overlap. The five changes in the combined car sum to −39.1% individually and give −37.1% together: 95% of the sum.
+
+<div class="table-wrap">
+
+| Configuration | ΔCd·A coarse | ΔCd·A medium | Δrange 120 km/h | Δrange HWFET |
+|---|---|---|---|---|
+| **All winning changes combined** | **−37.1%** | **−37.2%** | **+137 km** | **+128 km** |
+| Smooth floor + 5° diffuser | −19.6% | −18.8% | +61 km | +61 km |
+| Smooth floor only | −17.6% | −17.4% | +54 km | +54 km |
+| Wheel covers | −11.0% | −10.5% | +32 km | +33 km |
+| Ride height −30 mm | −4.5% | – | +12 km | +13 km |
+| Camera pods instead of mirrors | −4.1% | – | +11 km | +12 km |
+
+</div>
+
+The combined car reaches Cd 0.208, Cd·A 0.454 m² and Cl 0.11. Its predicted range at 120 km/h rises from 363 to 500 km, and from 555 to 682 km on the HWFET cycle.
+
+<Chart id="ev-range" title="Range gained per charge" caption="Predicted from the coarse-mesh drag. Smooth-floor and wheel-cover gains are upper bounds (see Limitations)." />
+
+<CompareSlider
+  before="ev-aerodynamics-range/flow-baseline.png"
+  after="ev-aerodynamics-range/flow-combined.png"
+  beforeLabel="Baseline"
+  afterLabel="Combined"
+  beforeAlt="Baseline flow fields: surface Cp side and underside, centre-plane velocity, and wake total-pressure plane."
+  afterAlt="Combined-car flow fields: same views, showing a smaller wake and less underbody suction loss."
+  caption="Flow fields on the medium mesh: surface Cp, centre-plane velocity and the wake total-pressure plane at x = 1.05 L. The combined car leaves a visibly smaller wake."
+/>
+
+<Gallery>
+  <Figure src="ev-aerodynamics-range/wake-planes.png" alt="Grid of wake total-pressure planes behind each of the twelve configurations." caption="Wake planes at x = 1.05 L for every configuration (coarse mesh). Darker means more total-pressure loss." size="half" />
+  <Figure src="ev-aerodynamics-range/energy-breakdown.png" alt="Stacked bars of where battery energy goes at each driving condition: aero, rolling, accessories, losses." caption="Where the battery energy goes at each driving condition." size="half" />
+</Gallery>
+
+I also scaled the saving to a hypothetical fleet of 10,000 cars driving 18,000 km a year each: **8.4 GWh/yr** saved for the combined car, or 4.1 GWh/yr on the low bound (predicted, with stated US-average assumptions).
+
+## How I checked the results
+
+None of this is validation against a measurement; that is the planned next step.
+
+- **Mesh independence.** Baseline Cd·A on 383k / 625k / 858k cells was 0.7215 / 0.7173 / 0.7207 m²: a spread of 0.6%. Convergence across the meshes was oscillatory, so Richardson extrapolation and GCI were not applicable; I used the three-mesh spread as the noise band instead. Lift varies by 6%, so I report it only as an indicator.
+- **Coarse vs medium.** For every large change, the medium-mesh delta agrees with the coarse one within 1.3 percentage points, so the coarse screen ranked the configurations correctly.
+- **Wall resolution.** I checked y+ on every run (baseline median 45, 65% of wall nodes in the 30–100 band) and the worst wall-cell orthogonal quality (0.096, on the underside ahead of the front arch).
+- **CAD-to-mesh area.** Before solving, I compared the meshed area of each car surface with the CAD area (1% tolerance). This caught one bad tessellation, which I re-meshed. A control run of the baseline on both tessellations agreed to 0.03%.
+- **Range model.** The steady-speed result matches a hand calculation, the energy breakdown sums to the total, the HWFET trace reproduces EPA's published duration, distance and mean speed, and a lossless car uses zero net energy over the cycle.
+- **Plausibility.** Baseline Cd 0.31 sits above DrivAer fastback values (0.25–0.28), as expected for a body with a flat, sharp-edged bumper face. The wheels carry 17–20% of the drag, in the usual road-car range.
+
+<Chart id="ev-mesh" title="Baseline mesh study" caption="Simulated baseline Cd·A on three meshes: spread 0.6%." />
+
+## Challenges & what I learned
+
+- **A CAD import silently lost surface area.** One tessellation dropped part of a surface without any error. My CAD-to-mesh area check caught it, and I now compare areas before trusting any import.
+- **The fine mesh did not fit in memory.** The 0.86 M-cell mesh was too large for the full sweep on a four-core laptop, so I confirmed the large changes on the medium mesh. Coarse-to-fine on the baseline changes Cd·A by only 0.1%, but this check is weaker than I planned.
+- **Oscillating convergence ruled out GCI.** Because the three meshes did not converge monotonically, a formal grid-convergence index would have been misleading. I used the three-mesh spread as an honest noise band instead and flagged any change smaller than it.
+- **Not every idea works.** The sides-only boat tail did nothing measurable in the simulation. I report it inside the noise rather than leaving it out.
+
+## Limitations & next steps
+
+- **Simulated, not measured.** Steady RANS with wall functions on a generic body. No measurement of this body exists.
+- **Smooth-floor and wheel-cover gains are upper bounds.** The baseline's rough floor is a crude block pattern and its open wheels have five large spoke windows. Production cars already have partial floor panels, so the fleet figures carry a low bound that credits only 40–50% of these gains.
+- **Generic body:** no glasshouse shaping, cooling intake or engine-bay flow.
+- **Rotating-wall wheels** miss the pumping of open spokes, which probably understates the wheel-cover gain.
+- **Fleet numbers** are for a hypothetical fleet; the peak-demand figure is an order of magnitude only.
+
+**Planned:** 3D-printed scale models of the baseline and the best variants for physical drag tests. These can check the ranking and rough size of the gains, not the absolute Cd, because a small model runs at a much lower Reynolds number. Also yaw (side-wind) cases, a city drive cycle, winter accessory loads and a WLTP cycle.
+
+## Software & skills used
+
+<SoftwareChips items={['Ansys Fluent 2026 R1 (Student)', 'Fluent Meshing watertight workflow', 'Poly-hexcore + prism layers', 'k-ω SST RANS', 'CadQuery (OpenCASCADE)', 'Python (range model)']} />
+
+**Skills:** road-vehicle aerodynamics, parametric design of experiments, mesh-independence study, convergence and wall-resolution checks, road-load and drive-cycle energy modelling, uncertainty bounds.

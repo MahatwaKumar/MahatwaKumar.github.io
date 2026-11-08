@@ -1,0 +1,17 @@
+---
+// A grid of figures. Every figure on the page also joins one full-screen lightbox sequence.
+interface Props { cols?: 2 | 3; label?: string }
+const { cols = 2, label } = Astro.props;
+---
+<div class:list={['gallery', `cols-${cols}`]} role={label ? 'group' : undefined} aria-label={label}>
+  <slot />
+</div>
+
+<style>
+  .gallery { display: grid; gap: var(--s4) var(--s5); margin: var(--s6) 0; align-items: start; }
+  .gallery :global(.figure) { margin: 0; }
+  @media (min-width: 700px) {
+    .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+</style>

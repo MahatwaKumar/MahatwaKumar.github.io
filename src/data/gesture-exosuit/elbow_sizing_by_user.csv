@@ -1,0 +1,3 @@
+"person","body_mass_kg","height_m","forearm_hand_mass_kg","segment_length_m","com_from_elbow_m","inertia_kg_m2","torque_arm_Nm","torque_brace_Nm","torque_hand_load_Nm","peak_static_Nm","peak_with_accel_Nm","margin_to_8Nm_rating","cable_tension_elbow_at_peak_N","cable_tension_pack_at_peak_N","lift_work_0_to_115deg_J","freefall_time_s","freefall_wrist_speed_m_s","cuff_force_N","cuff_pressure_kPa","cuff_pressure_mmHg"
+"median","75","1.75","1.65","0.256","0.174","0.074","2.82","0.29","1.63","4.74","5.01","1.60","100","128","6.7","0.29","2.29","30","3.7","28"
+"large","100","1.85","2.20","0.270","0.184","0.110","3.98","0.29","1.72","5.99","6.34","1.26","127","163","8.5","0.30","2.34","37","4.7","35"

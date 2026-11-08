@@ -1,0 +1,4 @@
+joint,required_torque_Nm,required_torque_kgcm,servo_rating_kgcm,safety_factor,load_case
+J2_shoulder,2.78,28.34,35,1.24,"arm horizontal, 100 g payload at claw tips (static)"
+J3_elbow,1.365,13.92,20,1.44,"arm horizontal, 100 g payload at claw tips (static)"
+J5_wrist,0.333,3.4,9.4,2.77,"arm horizontal, 100 g payload at claw tips (static)"

@@ -1,0 +1,78 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import Icon from './Icon.astro';
+import { site } from '../lib/site';
+const path = Astro.url.pathname;
+const isProjects = path.startsWith('/projects/');
+const isAbout = path.startsWith('/about');
+---
+<header class="site-header" transition:persist="header">
+  <div class="container bar">
+    <a class="brand" href="/" aria-label={`${site.name}, home`}>
+      <span class="mono-mark" aria-hidden="true">MK</span>
+      <span class="brand-name">{site.name}</span>
+    </a>
+    <nav aria-label="Main">
+      <a href="/#projects" aria-current={isProjects ? 'page' : undefined}>Projects</a>
+      <a href="/about/" aria-current={isAbout ? 'page' : undefined}>About</a>
+      <a href="/resume.pdf" class="hide-xs">Resume</a>
+    </nav>
+    <div class="tools">
+      <button class="search-trigger" type="button" aria-label="Search the site (Ctrl+K)" data-open-search>
+        <Icon name="search" />
+        <span class="search-label">Search</span>
+        <kbd class="kbd-hint">Ctrl K</kbd>
+      </button>
+      <ThemeToggle />
+    </div>
+  </div>
+</header>
+
+<script>
+  // Keep aria-current right after client-side navigation (the header persists between pages).
+  document.addEventListener('astro:page-load', () => {
+    const p = location.pathname;
+    document.querySelectorAll<HTMLAnchorElement>('.site-header nav a').forEach((a) => {
+      const href = a.getAttribute('href') ?? '';
+      const on = (href === '/#projects' && p.startsWith('/projects/')) || (href === '/about/' && p.startsWith('/about'));
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+    document.querySelectorAll('.kbd-hint').forEach((k) => (k.textContent = isMac ? '⌘K' : 'Ctrl K'));
+  });
+</script>
+
+<style>
+  .site-header {
+    position: sticky; top: 0; z-index: 100; height: var(--header-h);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: saturate(1.6) blur(12px); -webkit-backdrop-filter: saturate(1.6) blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .bar { height: 100%; display: flex; align-items: center; gap: var(--s4); }
+  .brand { display: inline-flex; align-items: center; gap: var(--s3); color: var(--text); text-decoration: none; font-weight: 650; min-height: 44px; }
+  .mono-mark {
+    display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px;
+    background: var(--accent); color: var(--accent-contrast); font: 700 0.85rem/1 var(--font-mono); letter-spacing: -0.02em;
+  }
+  nav { display: flex; gap: var(--s1); margin-left: auto; }
+  nav a {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s3); border-radius: var(--radius-sm);
+    color: var(--text-muted); text-decoration: none; font-size: var(--fs-sm); font-weight: 550;
+  }
+  nav a:hover, nav a[aria-current='page'] { color: var(--text); background: var(--surface-2); }
+  .tools { display: flex; align-items: center; gap: var(--s1); }
+  .search-trigger {
+    display: inline-flex; align-items: center; gap: var(--s2); min-height: 44px; min-width: 44px; justify-content: center;
+    padding: 0 var(--s3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+    color: var(--text-muted); font: 500 var(--fs-sm) var(--font-sans); cursor: pointer;
+  }
+  .search-trigger:hover { border-color: var(--border-strong); color: var(--text); }
+  .search-trigger :global(svg) { width: 18px; height: 18px; }
+  .kbd-hint { white-space: nowrap; }
+  @media (max-width: 767px) {
+    .brand-name, .search-label, .kbd-hint { display: none; }
+    .search-trigger { border-color: transparent; background: transparent; padding: 0; }
+  }
+  @media (max-width: 400px) { .hide-xs { display: none !important; } nav a { padding: 0 var(--s2); } }
+</style>
