@@ -17,6 +17,12 @@ tags: ['cad', 'robotics']
 software: ['SolidWorks', 'Python']
 featured: false
 order: 6
+model3d:
+  src: '/models/iris-claw.glb'
+  poster: '/models/iris-claw-poster.webp'
+  alt: 'Interactive 3D model of the Iris Claw arm assembled from the SolidWorks parts in its idle pose: graphite and grey printed links, orange servos, teal bearing rings and amber claw tips.'
+  label: 'Arm, idle pose'
+  cameraOrbit: '35deg 70deg auto'
 downloads:
   - { label: 'General-arrangement drawing', file: '/files/iris-claw/iris-claw-general-arrangement.pdf', description: 'A3 drawing: orthographic and isometric views, ballooned BOM with part functions' }
 ---
@@ -25,6 +31,7 @@ import Gallery from '../../components/Gallery.astro';
 import Chart from '../../components/Chart.astro';
 import ProcessDiagram from '../../components/ProcessDiagram.astro';
 import SoftwareChips from '../../components/SoftwareChips.astro';
+import ProjectModel from '../../components/ProjectModel.astro';
 
 ## Overview
 
@@ -66,6 +73,8 @@ The design phase is complete. All numbers are **predicted** from the CAD model a
 </Gallery>
 
 <Figure src="iris-claw/kinematics.png" alt="Three 3D skeleton plots of the arm's joint axes and fingers for the idle, peace-sign and power-grip poses." caption="Forward-kinematics model of the three poses: joint axes in orange, fingers in amber. Every component in the assembly is placed from this model." />
+
+<ProjectModel id="iris-claw" caption="The full assembly in its idle pose: all 47 components (29 different parts), each placed from the kinematic model, as in the SolidWorks assembly. Drag to rotate." />
 
 ## Results
 
@@ -123,8 +132,6 @@ Worst case means the arm stretched horizontally with a 100 g object at the claw 
 - **Assumed mass factor:** real slicer weights may differ from the 50% fill assumption.
 
 **Planned (not started):** printing and assembly; wiring and servo calibration; export to URDF and a digital twin in NVIDIA Isaac Sim; webcam hand-tracking teleoperation; reinforcement and imitation learning of tasks.
-
-{/* TODO(Mahatwa): export the posed power-grip assembly from SolidWorks as one STEP or STL, add it to the model conversion list in scripts/convert-models.mjs and add model3d to this page's frontmatter. */}
 
 ## Software & skills used
 
