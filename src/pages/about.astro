@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import AboutMe from '../components/AboutMe.astro';
 import { site, githubUrl } from '../lib/site';
 import { education, experience, skills, publication, honors } from '../lib/resume';
 import fs from 'node:fs';
@@ -35,6 +36,10 @@ const resumeKb = Math.round(fs.statSync(path.join(process.cwd(), 'public/resume.
     <div class="photo" role="img" aria-label="Photo placeholder">
       <span aria-hidden="true">MK</span>
     </div>
+  </section>
+
+  <section class="container block" aria-labelledby="about-me">
+    <AboutMe />
   </section>
 
   <section class="container block" aria-labelledby="edu-h">

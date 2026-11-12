@@ -14,7 +14,7 @@ keyResults:
   - { value: '1,759.6', unit: 'g', label: 'Total mass including bearing', qualifier: 'predicted' }
   - { value: '11', unit: 'servos', label: '6 arm joints + 4 finger drives + swivel', qualifier: 'design' }
 tags: ['cad', 'robotics']
-software: ['SolidWorks', 'Python']
+software: ['SolidWorks']
 featured: false
 order: 6
 model3d:
@@ -33,11 +33,17 @@ import ProcessDiagram from '../../components/ProcessDiagram.astro';
 import SoftwareChips from '../../components/SoftwareChips.astro';
 import ProjectModel from '../../components/ProjectModel.astro';
 
-## Overview
+## Problem statement
 
-Robot arms are expensive mainly because of their motors and the engineering time needed to program every movement. A student or a small lab can't easily get an arm to experiment with.
+Robot arms are expensive, mainly because of their motors and the engineering time it takes to program every movement. That puts them out of reach for a student or a small lab that wants one to experiment with.
 
-I designed Iris Claw to be cheap enough to print on makerspace printers, light enough to run on hobby servos, and described precisely enough (as a CAD model and a kinematic model) to be used later in a physics simulator, where control policies can be trained before they run on the real hardware.
+I set out to design an arm that is:
+
+- **cheap**, with parts printed on makerspace printers and driven by hobby servos;
+- **light enough** for those servos to hold it at full reach while carrying a 100 g object;
+- **defined precisely enough**, as a CAD model and a kinematic model, to drop into a physics simulator later, so control can be trained before it runs on the real arm.
+
+The question for this phase: can every joint hold its worst-case static load with the servos I picked, and if not, which joint fails first?
 
 <div class="note">
 
@@ -45,18 +51,24 @@ The design phase is complete. All numbers are **predicted** from the CAD model a
 
 </div>
 
-## My approach
+## Approach
 
 <ProcessDiagram
   steps={[
-    { title: 'Parameters', detail: 'Servo bodies, link lengths and finger segments in one shared set of dimensions' },
+    { title: 'Shared dimensions', detail: 'Servo bodies, link lengths and finger segments in one table' },
     { title: 'Part models', detail: '29 parametric parts with materials and colours', tool: 'SolidWorks' },
-    { title: 'Kinematics', detail: '4×4 homogeneous transforms place all 47 components for any joint angles', tool: 'Python' },
+    { title: 'Kinematic model', detail: '4×4 homogeneous transforms give every component\'s position for any joint angles' },
     { title: 'Posed assemblies + drawing', detail: 'Three poses, A3 general arrangement with BOM', tool: 'SolidWorks' },
-    { title: 'Mass + torque', detail: 'Mass properties from each part; worst-case static torque per joint', tool: 'SolidWorks · Python' },
+    { title: 'Mass + torque', detail: 'Mass properties of each part; worst-case static torque per joint', tool: 'SolidWorks' },
     { title: 'Print + assemble', detail: 'Printing, wiring and servo calibration', planned: true },
   ]}
 />
+
+I started from one shared table of dimensions (servo bodies, link lengths, finger segments), so a change to one number carries through every part that uses it.
+
+- **In SolidWorks** I modeled all 29 parts as parametric parts and gave each one its material and colour. I built three posed assemblies (idle, peace sign, power grip) of 47 components each, made an A3 general-arrangement drawing with a ballooned bill of materials, and took the mass properties of every part for the load analysis.
+- **For the kinematics** I described the arm as a chain of 4×4 homogeneous transforms, from the base yaw joint out to each finger segment. Every component in each SolidWorks assembly sits exactly where this model puts it for that pose's joint angles.
+- **For the loads** I took the arm's worst static case: stretched out horizontally with a 100 g object at the claw tips. I summed the moment of every link, servo and the payload about each pitch joint, and compared the result with that servo's rated torque.
 
 ### Design choices
 
@@ -72,11 +84,17 @@ The design phase is complete. All numbers are **predicted** from the CAD model a
   <Figure src="iris-claw/power-grip-pose.png" alt="Render of the arm reaching forward with the claw closed in a power grip." caption="Power-grip pose." size="half" />
 </Gallery>
 
-<Figure src="iris-claw/kinematics.png" alt="Three 3D skeleton plots of the arm's joint axes and fingers for the idle, peace-sign and power-grip poses." caption="Forward-kinematics model of the three poses: joint axes in orange, fingers in amber. Every component in the assembly is placed from this model." />
+<Figure src="iris-claw/kinematics.png" alt="Three 3D skeleton plots of the arm's joint axes and fingers for the idle, peace-sign and power-grip poses." caption="Kinematic model of the three poses: joint axes in orange, fingers in amber. Every component in the assembly is placed from this model." />
 
 <ProjectModel id="iris-claw" caption="The full assembly in its idle pose: all 47 components (29 different parts), each placed from the kinematic model, as in the SolidWorks assembly. Drag to rotate." />
 
-## Results
+### Tools I used
+
+<SoftwareChips items={['SOLIDWORKS 2026 (parts, assemblies, drawings, BOM, mass properties)', 'Design for 3D printing', 'STEP / STL export']} />
+
+**Skills:** robot kinematics (homogeneous transforms), mechanism and joint design, tendon-driven finger design, servo selection, static torque and mass analysis, safety factors, engineering drawing.
+
+## Analysis
 
 <div class="table-wrap">
 
@@ -101,7 +119,7 @@ Worst case means the arm stretched horizontally with a 100 g object at the claw 
 
 <Chart id="ic-torque" title="Required torque vs servo rating" caption="Predicted, static, arm horizontal with a 100 g payload. The shoulder needs 81% of its servo's rated torque." />
 
-**The shoulder is the critical joint.** At full horizontal reach it needs 81% of its servo's rated torque. I've proposed three changes to raise that margin: a spring counterbalance at the shoulder, lighter infill in the links, and an upgrade of the elbow servo to a DS3235, which shares the same body size. These fixes are designed on paper only; they are not yet in the CAD model or the analysis.
+The torque falls quickly from the shoulder outwards, because each joint only carries the links beyond it. The shoulder carries almost the whole arm on the longest lever arm, so it needs 81% of its servo's rated torque.
 
 <Chart id="ic-mass" title="Predicted mass by group" caption="Printed masses use 50% of solid PLA mass to stand in for 3 walls and 25% infill." />
 
@@ -110,31 +128,32 @@ Worst case means the arm stretched horizontally with a 100 g object at the claw 
   <Figure src="iris-claw/printed-parts.png" alt="Grid of twelve grey printed parts rendered from their STL files, each labelled with name and size." caption="Twelve of the printed parts, rendered from their print-ready STL files." size="half" />
 </Gallery>
 
-## How I checked the results
+### How I checked it
 
-- **Assembly placement check.** I compared the bounding box of every component as placed in SolidWorks with the box predicted by my kinematic model. The worst difference on the idle pose was **0.00 mm** over 47 components, which confirms the transform convention used for every pose and for the torque analysis.
+- **Assembly placement check.** I compared the bounding box of every component as placed in SolidWorks with the box predicted by my kinematic model. The worst difference on the idle pose was **0.00 mm** over 47 components, which confirms the placement used for every pose and for the torque analysis.
 - **Single-body check.** I confirmed every part is one solid body, which catches features that leave loose fragments. The only exception is the upper-arm side panels, which are two separate panels by design.
-- **Materials and colours.** After saving, I read every part's appearance values back to confirm they were stored.
+- **Materials and colours.** After saving, I checked every part's appearance values to confirm they were stored.
 - **Hand check of the masses.** The servo total (375.4 g) matches the catalogue masses, and the printed mass is the sum of the individual parts.
 - **Not done:** no finite-element analysis, mesh study or physical test. The torques are static (no acceleration, friction or tendon loads).
 
-## Challenges & what I learned
+## Conclusion
 
-- **The shoulder margin is too thin.** A safety factor of 1.24 is low for a hobby servo whose real torque is often below its datasheet value. Finding this on paper, before printing, is exactly why I did the analysis first.
-- **No PLA in the material library.** SolidWorks had no PLA, so the printed parts carry ABS as their CAD material, and I used the PLA density (1.24 g/cm³) and a 50% fill factor in the mass analysis instead.
-- **Posed, not mated.** I place each component from the kinematic model and fix it, rather than using mates, so the three poses match the kinematics exactly. The trade-off is that the joints can't be dragged in SolidWorks.
-- **Servo bodies are from datasheets.** I modeled them from typical datasheet dimensions, and they need checking against the real servos before printing.
+The design works on paper: with the servos I chose, every joint can hold the stretched-out arm and a 100 g object. **The shoulder is the critical joint**, at a predicted safety factor of 1.24. That is too thin for a hobby servo, whose real torque is often below its datasheet value. The elbow (1.44) and wrist (2.77) have more margin.
 
-## Limitations & next steps
+To raise the shoulder margin I've proposed three changes: a spring counterbalance at the shoulder, lighter infill in the links, and an upgrade of the elbow servo to a DS3235, which shares the same body size. These are on paper only; they are not yet in the CAD model or the analysis.
+
+**Limitations:**
 
 - **No hardware yet.** Nothing has been printed or assembled.
 - **Static analysis only.** Dynamic loads from acceleration, gearbox backlash, tendon friction and servo heating are not modelled.
-- **Assumed mass factor:** real slicer weights may differ from the 50% fill assumption.
+- **Assumed mass factor.** Real slicer weights may differ from the 50% fill assumption.
 
-**Planned (not started):** printing and assembly; wiring and servo calibration; export to URDF and a digital twin in NVIDIA Isaac Sim; webcam hand-tracking teleoperation; reinforcement and imitation learning of tasks.
+**Next steps (not started):** printing and assembly; wiring and servo calibration; export to URDF and a digital twin in NVIDIA Isaac Sim; webcam hand-tracking teleoperation; reinforcement and imitation learning of tasks.
 
-## Software & skills used
+## Issues I ran into
 
-<SoftwareChips items={['SOLIDWORKS 2026 (parts, assemblies, drawings, BOM, mass properties)', 'Python (kinematics and torque analysis)', 'Design for 3D printing', 'STEP / STL export']} />
-
-**Skills:** robot kinematics (homogeneous transforms), mechanism and joint design, tendon-driven finger design, servo selection, static torque and mass analysis, safety factors, engineering drawing.
+- **The shoulder margin came out too thin.** The analysis showed the shoulder servo at 81% of its rating before any dynamic load. Finding this on paper, before printing, is exactly why I did the analysis first.
+- **No PLA in the SolidWorks material library.** The printed parts carry ABS as their CAD material, so SolidWorks' own mass values don't match a PLA print. I used the PLA density (1.24 g/cm³) and a 50% fill factor in the mass analysis instead.
+- **SolidWorks crashed when I reopened the posed assemblies.** Closing all three and reopening them crashed SolidWorks 2026, so I saved each pose's renders straight from the open assembly instead.
+- **Posed, not mated.** To make the three poses match the kinematic model exactly, I fixed each component in place rather than using mates. The trade-off is that the joints can't be dragged in SolidWorks to try new poses.
+- **Servo bodies are from datasheets.** I modeled them from typical datasheet dimensions. They need checking against the real servos before printing, or the cheek-plate windows may not fit.

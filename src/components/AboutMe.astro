@@ -1,0 +1,37 @@
+---
+// "About me": a short intro plus what I work on, what interests me and what I'm looking for.
+import { aboutMe } from '../lib/site';
+import Icon from './Icon.astro';
+interface Props { headingLevel?: 'h2' | 'h3'; showLink?: boolean; id?: string }
+const { headingLevel = 'h2', showLink = false, id = 'about-me' } = Astro.props;
+const H = headingLevel;
+---
+<div class="about-me">
+  <div class="head">
+    <p class="eyebrow">About me</p>
+    <H id={id}>What I do and what I'm after</H>
+    <p class="intro">{aboutMe.intro}</p>
+    {showLink && <a class="more" href="/about/">More about me <Icon name="arrow-right" /></a>}
+  </div>
+  <div class="groups">
+    {aboutMe.groups.map((g) => (
+      <section class="card group reveal">
+        <h3>{g.title}</h3>
+        <ul>{g.points.map((p) => <li>{p}</li>)}</ul>
+      </section>
+    ))}
+  </div>
+</div>
+
+<style>
+  .about-me { display: grid; gap: var(--s6); }
+  .head { max-width: 72ch; }
+  .intro { font-size: var(--fs-lg); color: var(--text-muted); line-height: 1.6; margin-top: var(--s3); }
+  .more { display: inline-flex; align-items: center; gap: var(--s2); min-height: 44px; font-weight: 600; text-decoration: none; }
+  .more :global(svg) { width: 16px; height: 16px; }
+  .groups { display: grid; gap: var(--s4); }
+  @media (min-width: 900px) { .groups { grid-template-columns: repeat(3, 1fr); } }
+  .group { padding: var(--s5); }
+  .group h3 { font-size: var(--fs-lg); margin: 0 0 var(--s3); }
+  .group ul { margin: 0; padding-left: 1.1em; display: grid; gap: var(--s2); color: var(--text-muted); }
+</style>

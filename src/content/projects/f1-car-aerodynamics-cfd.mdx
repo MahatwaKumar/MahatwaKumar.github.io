@@ -4,7 +4,7 @@ shortTitle: 'F1 Car External Aerodynamics CFD'
 slug: 'f1-car-aerodynamics-cfd'
 date: 2026-01-01
 status: 'complete'
-summary: 'I modeled a 59-part ground-effect F1-style car in CadQuery, meshed it in Ansys Fluent Meshing (781,527-cell poly-hexcore) and simulated it in Ansys Fluent with k-ω SST, a moving ground and rotating wheels. A component force breakdown showed the placeholder floor was why the car was 87% front-loaded; my redesigned venturi floor roughly doubled simulated downforce at equal drag and moved the balance to 62% front.'
+summary: 'I modeled a 59-part ground-effect F1-style car as a parametric CAD model, meshed it in Ansys Fluent Meshing (781,527-cell poly-hexcore) and simulated it in Ansys Fluent with k-ω SST, a moving ground and rotating wheels. A component force breakdown showed the placeholder floor was why the car was 87% front-loaded; my redesigned venturi floor roughly doubled simulated downforce at equal drag and moved the balance to 62% front.'
 cardSummary: 'Traced an 87%-front aero balance to a weak floor, then redesigned the venturi floor: 1.93× simulated downforce at equal drag.'
 heroImage: '../../assets/projects/f1-car-aerodynamics-cfd/design-car.png'
 heroAlt: 'CAD render of the 59-part ground-effect single-seater: red bodywork, black tyres, three-element front wing and rear wing.'
@@ -14,7 +14,7 @@ keyResults:
   - { value: '62', unit: '% front', label: 'Aero balance (was 87% front)', qualifier: 'simulated' }
   - { value: '2.68', unit: 'L/D', label: 'Lift-to-drag ratio (was 1.40)', qualifier: 'simulated' }
 tags: ['cfd', 'cad']
-software: ['Ansys Fluent', 'Fluent Meshing', 'CadQuery', 'k-ω SST RANS']
+software: ['Ansys Fluent', 'Fluent Meshing', 'k-ω SST RANS']
 featured: true
 order: 1
 model3d:
@@ -37,11 +37,11 @@ import ProcessDiagram from '../../components/ProcessDiagram.astro';
 import ProjectModel from '../../components/ProjectModel.astro';
 import SoftwareChips from '../../components/SoftwareChips.astro';
 
-## Overview
+## Problem statement
 
 A modern ground-effect F1 car makes most of its downforce from the floor, not the wings. I wanted to see that for myself in CFD: build a complete car, simulate it at speed, and understand where its downforce, drag and aero balance come from.
 
-The first car I simulated was badly front-loaded: 87% of its downforce sat on the front axle. Finding out why, and fixing it, became the core of the project.
+The first car I simulated was badly front-loaded: 87% of its downforce sat on the front axle. The question this project answers: why was the car so front-heavy, and can a better floor fix the balance without adding drag?
 
 <div class="note">
 
@@ -49,11 +49,11 @@ All CFD numbers on this page are **simulated** on a single coarse mesh. They are
 
 </div>
 
-## My approach
+## Approach
 
 <ProcessDiagram
   steps={[
-    { title: 'Design in CAD', detail: '59-part car, then fused to one watertight solid for CFD', tool: 'CadQuery' },
+    { title: 'Design in CAD', detail: '59-part car, then fused to one watertight solid for CFD' },
     { title: 'Set up the domain', detail: 'Half car + symmetry plane in a 30.5 × 5 × 5 m box', tool: 'Fluent Meshing' },
     { title: 'Mesh', detail: 'Poly-hexcore, 3 prism layers, 20 mm under-floor box: 781,527 cells', tool: 'Fluent Meshing' },
     { title: 'Simulate', detail: 'Steady RANS, k-ω SST, 50 m/s, moving ground, rotating wheels', tool: 'Ansys Fluent' },
@@ -62,17 +62,12 @@ All CFD numbers on this page are **simulated** on a single coarse mesh. They are
   loop="the component breakdown pointed at the floor, so I redesigned it (v4) and re-ran the case."
 />
 
-### Geometry
-
-I modeled the design car in CadQuery as 59 parametric parts: a three-element front wing, nose, survival cell, sidepods, halo, suspension arms, wheels, beam wing and rear wing. For CFD I simplified it and fused everything into **one watertight solid**. I checked every build for a valid single solid, watertightness, zero self-intersecting faces and size limits before it went anywhere near the mesher.
-
-<Figure src="f1-car-aerodynamics-cfd/cfd-car-v4.png" alt="Three views of the fused v4 CFD car in red: isometric, side and top." caption="The v4 CFD car: one fused, watertight solid with the venturi floor, shown in isometric, side and top views." />
-
-<ProjectModel id="f1-car-aerodynamics-cfd" caption="The v4 CFD car (watertight surface, reduced to 150,000 faces for viewing). Drag to rotate, scroll or pinch to zoom." />
-
-### Domain and boundary conditions
-
-I modeled half the car with a symmetry plane at the centreline, which halves the cell count and let me spend the Ansys Student licence's limit of 1,048,576 cells on resolution where it matters.
+- **In a parametric CAD model** I built the design car as 59 parts (three-element front wing, nose, survival cell, sidepods, halo, suspension arms, wheels, beam wing and rear wing), then simplified it and fused everything into **one watertight solid** so it could go straight into the mesher. I checked every build for a valid single solid, watertightness, zero self-intersecting faces and size limits.
+- **In the same CAD model** I redesigned the floor (v4) with two venturi tunnels, a throat at X = 3.3 m and an ~8° diffuser, defining the tunnel roof height, keel and width at stations along the car, so the floor could make the downforce the placeholder floor was missing.
+- **In Ansys Fluent Meshing** I set up a half car with a symmetry plane at the centreline in a 30.5 × 5 × 5 m box, which halves the cell count and let me spend the Ansys Student licence's limit of 1,048,576 cells on resolution where it matters.
+- **In Ansys Fluent Meshing** I built the mesh with the watertight workflow: 8 to 60 mm surface sizing with 18° curvature refinement and a 3 mm minimum on the wings, a 160 mm box around the car and wake, a **20 mm box under the floor** from x = 1.4 to 5.5 m where the venturi flow accelerates, 3 prism layers, and a poly-hexcore volume mesh of **781,527 cells** with a minimum orthogonal quality of **0.150**, so the floor and wings got the finest cells while staying under the licence limit.
+- **In Ansys Fluent** I ran steady RANS with k-ω SST at 50 m/s, with a moving ground and rotating wheels, so the under-floor flow and wheel wakes behave more like a car on track than a car in a fixed-floor tunnel.
+- **In Ansys Fluent** I took drag, downforce, CdA and ClA, found the aero balance from the pitching moment about the ground line under the front axle, and exported surface pressure and shear to integrate the force on each component, so I could see which part was causing the front-heavy balance.
 
 <div class="table-wrap">
 
@@ -89,25 +84,22 @@ I modeled half the car with a symmetry plane at the centreline, which halves the
 
 </div>
 
-### Mesh strategy
+<Figure src="f1-car-aerodynamics-cfd/cfd-car-v4.png" alt="Three views of the fused v4 CFD car in red: isometric, side and top." caption="The v4 CFD car: one fused, watertight solid with the venturi floor, shown in isometric, side and top views." />
 
-I meshed the car with the Fluent Meshing watertight workflow:
-
-- **Surface sizing:** 8 to 60 mm on the car, with 18° curvature refinement and a 3 mm minimum on the wings, where the leading edges and slots are tight.
-- **Body-of-influence boxes:** a 160 mm box around the car and wake, and a **20 mm box under the floor** from x = 1.4 to 5.5 m, where the venturi flow accelerates.
-- **Boundary layer:** 3 prism layers.
-- **Volume:** poly-hexcore, **781,527 cells** for the v4 car, with a minimum orthogonal quality of **0.150**. The Fluent mesh check passes.
-
-### Floor redesign (v4)
-
-The redesigned floor has two venturi tunnels with a throat at X = 3.3 m and an ~8° diffuser. I defined the tunnel roof height, keel and width at stations along the car.
+<ProjectModel id="f1-car-aerodynamics-cfd" caption="The v4 CFD car (watertight surface, reduced to 150,000 faces for viewing). Drag to rotate, scroll or pinch to zoom." />
 
 <Gallery>
   <Figure src="f1-car-aerodynamics-cfd/venturi-floor.png" alt="Two plots: tunnel roof height and keel height along the car, with the throat marked near 3.3 m; tunnel width from the centreline." caption="Venturi floor design (half car): tunnel roof height and keel along the car, with the throat at X = 3.3 m, and the tunnel width at each station." size="half" />
-  <Figure src="f1-car-aerodynamics-cfd/design-car.png" alt="Render of the full 59-part design car from the front three-quarter view." caption="The 59-part design car I modeled in CadQuery, before simplification for CFD." size="half" />
+  <Figure src="f1-car-aerodynamics-cfd/design-car.png" alt="Render of the full 59-part design car from the front three-quarter view." caption="The 59-part design car as a parametric CAD model, before simplification for CFD." size="half" />
 </Gallery>
 
-## Results
+### Tools I used
+
+<SoftwareChips items={['Ansys Fluent 2026 R1 (Student)', 'Fluent Meshing watertight workflow', 'Poly-hexcore meshing', 'k-ω SST RANS', 'Parametric CAD modeling', 'STEP / STL exchange']} />
+
+**Skills:** external aerodynamics, ground-effect floor design, mesh strategy under a cell budget, boundary-condition set-up (moving ground, rotating wheels), convergence monitoring, aero force and moment analysis, surface-force integration.
+
+## Analysis
 
 The redesigned floor nearly doubled simulated downforce while drag stayed almost the same.
 
@@ -145,7 +137,7 @@ The redesigned floor nearly doubled simulated downforce while drag stayed almost
 
 The v4 values fall inside rough public ranges for 2022–23 F1 cars: CdA 1.0–1.5 m², ClA 3–5 m² and L/D about 2.5–4. I did not tune anything to hit them, and being in range does not validate the CFD.
 
-## How I checked the results
+### How I checked it
 
 - **Convergence.** I stopped each solve on force flatness, not residuals: forces had to be flat to 1% over a 100-iteration window (checked every 50 iterations, minimum 300). On v4, drag varied 0.86% over the last 100 iterations, which **meets** the target. Downforce varied 1.98%, which does **not**, so I report v4 as the mean of the last 100 iterations.
 - **Force breakdown.** On the v3 run, my surface integration of pressure and shear reproduced Fluent's own force totals, so I trusted the per-component numbers.
@@ -156,30 +148,32 @@ The v4 values fall inside rough public ranges for 2022–23 F1 cars: CdA 1.0–1
 
 <Chart id="f1-convergence" title="Force history, v4 car" caption="Simulated. Drag settles within 1%; downforce still swings about 2% over the last 100 iterations." />
 
-## Challenges & what I learned
+## Conclusion
 
-- **Thin trailing edges broke the surface mesh.** The wings' sharp trailing edges and narrow slots would not mesh cleanly, so I blunted the trailing edges to 10 mm and widened the slots. That made the wings meshable, but it changes their load, and I list it as a limitation.
-- **Refining the mesh did not fix the balance.** I expected the 87%-front balance to be a resolution problem. When the 20 mm under-floor box barely moved it, I learned to break the forces down by component before changing anything else. That breakdown showed the floor was the problem.
-- **The cell budget shapes every decision.** With a hard limit of 1,048,576 cells, I used a half-car symmetry model and put refinement boxes only where the physics needed them: under the floor and around the wings.
-- **A wake test failed its own gate.** I tried using this car's CFD wake as the inlet for a following car, to replace the fitted wake in my [dirty-air lap-time model](/projects/f1-dirty-air-lap-time-model/). The follower *gained* downforce, which failed the gate I set in advance, so I did not change the model.
+The car was front-heavy because its placeholder floor was too weak, not because of the mesh. The front wing made 2,435 N while the old floor made only 976 N. Replacing it with a venturi floor took simulated downforce from 2,541 N to 4,909 N (1.93×) with drag almost unchanged (1,819 N to 1,833 N), and moved the balance from 87% to 62% front. The car is still more front-loaded than a real one, because the front wing sits well ahead of the front axle.
 
-## Limitations & next steps
+**Limitations:**
 
-**Limitations**
 - Simulated, coarse trends, not validated predictions: one mesh, no mesh-independence study, only 3 prism layers, and steady RANS on a flow with unsteady shedding.
 - The car is generic: photo-estimated proportions, simplified suspension, plain cylindrical tyres without rims, and a simple floor shape.
 - The blunted 10 mm trailing edges and wider slots change the wing loads.
 - A half-car symmetry model cannot show yaw or side-to-side shedding.
 - I started a wing set-up trim to move the balance further rearward, but stopped it before convergence, so I report no result.
 
-**Next steps (planned, not done)**
+**Next steps (planned, not done):**
+
 - A three-mesh grid study with GCI.
 - Restoring thin trailing edges with local refinement.
 - A short unsteady (URANS) check.
 - A speed sweep at 50, 70 and 90 m/s.
 
-## Software & skills used
+## Issues I ran into
 
-<SoftwareChips items={['Ansys Fluent 2026 R1 (Student)', 'Fluent Meshing watertight workflow', 'Poly-hexcore meshing', 'k-ω SST RANS', 'CadQuery (OpenCASCADE)', 'STEP / STL exchange']} />
-
-**Skills:** external aerodynamics, ground-effect floor design, mesh strategy under a cell budget, boundary-condition set-up (moving ground, rotating wheels), convergence monitoring, aero force and moment analysis, surface-force integration.
+- **Thin trailing edges broke the surface mesh.** The first wing trailing edges were 1.4 to 4.7 mm thick, and Fluent Meshing's surface mesher failed on them with a "front could not be closed" error. I blunted every trailing edge to 10 mm (6 mm still could not be meshed at an 8 mm minimum size) and added curvature refinement down to 3 mm on the wings only. That made the wings meshable, but it changes their load, and I list it as a limitation.
+- **Wing slots were too narrow to mesh.** The front-wing slots were only 2 to 3 mm wide. I opened them to at least 11 mm on the front wing and 10 mm on the rear wing.
+- **The mesh went over the licence cell limit.** An earlier mesh with 15 mm under-floor cells and a 120 mm near-car box had 1,210,898 cells, over the 1,048,576 limit. A 3 mm minimum size on the whole car gave 1.17 million cells before prisms, and 18° curvature refinement everywhere gave 1.10 million. I coarsened the under-floor box to 20 mm rather than shrinking it or dropping a prism layer, and kept 18° curvature refinement on the wings only (24° elsewhere).
+- **Tyre contact patches gave overlapping faces.** I sank the tyres 8 mm into the ground so it cuts a clean contact patch, but the ground then met the tyre at about 12° along the patch edges and the surface mesher found overlapping faces there. I added a small rectangular block under each tyre that meets the ground at 90°.
+- **Tiny sliver faces in the CAD.** The rear-wing endplate's leading edge sat exactly on the main element's leading edge and left a 0.1 mm² face, the DRS pod grazed the wing with 2.5 mm² faces, and the halo legs ended about 1 mm off the body. I moved the endplate 15 mm forward, removed the DRS pod, and gave the halo legs short feet.
+- **I lost the first run's solution.** Fluent hung on a later step and the first run's results were never saved. Since then I write the case and data straight after each solve.
+- **Refining the mesh did not fix the balance.** I expected the 87%-front balance to be a resolution problem. When the 20 mm under-floor box barely moved it, I learned to break the forces down by component before changing anything else. That breakdown showed the floor was the problem.
+- **A wake test failed its own gate.** I tried using this car's CFD wake as the inlet for a following car, to replace the fitted wake in my [dirty-air lap-time model](/projects/f1-dirty-air-lap-time-model/). The follower *gained* downforce, which failed the gate I set in advance, so I did not change the model.

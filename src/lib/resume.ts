@@ -39,8 +39,8 @@ export const experience = [
 
 export const skills = [
   { group: 'CFD & Simulation', items: ['Ansys Fluent', 'Fluent Meshing', 'k-ω SST RANS', 'Conjugate heat transfer', 'COMSOL', 'Lap-time simulation'] },
-  { group: 'CAD & Prototyping', items: ['SolidWorks', 'Fusion 360 (CAD/CAM)', 'CadQuery', 'Engineering drawings & BOMs', 'FDM, SLA and SLS 3D printing'] },
-  { group: 'Programming & Electronics', items: ['Python', 'MATLAB', 'C++', 'Embedded C (ESP32, nRF52)', 'Motor control', 'LaTeX'] },
+  { group: 'CAD & Prototyping', items: ['SolidWorks', 'Fusion 360 (CAD/CAM)', 'Engineering drawings & BOMs', 'FDM, SLA and SLS 3D printing'] },
+  { group: 'Programming & Electronics', items: ['MATLAB', 'C++', 'Embedded C (ESP32, nRF52)', 'Motor control', 'LaTeX'] },
 ];
 
 export const publication = {

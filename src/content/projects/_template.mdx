@@ -32,11 +32,11 @@ import ProcessDiagram from '../../components/ProcessDiagram.astro';
 import ProjectModel from '../../components/ProjectModel.astro';
 import SoftwareChips from '../../components/SoftwareChips.astro';
 
-## Overview
+## Problem statement
 
-The problem in plain words.
+The problem in plain words, and the question this project answers.
 
-## My approach
+## Approach
 
 <ProcessDiagram
   steps={[
@@ -48,20 +48,27 @@ The problem in plain words.
   ]}
 />
 
+- **In SolidWorks** I did X to achieve Y.
+- **In Ansys Fluent** I did X to achieve Y.
+
 <Figure src="your-slug/hero.png" alt="What the figure shows" caption="Caption shown under the figure." />
 
 {/* <ProjectModel id="your-slug" caption="…" /> */}
 
-## Results
+### Tools I used
+
+<SoftwareChips items={['SolidWorks']} />
+
+## Analysis
 
 {/* Charts are defined in src/lib/charts.ts from CSVs in src/data/<slug>/. */}
 
-## How I checked the results
+### How I checked it
 
-## Challenges & what I learned
+## Conclusion
 
-## Limitations & next steps
+The answer to the problem, then limitations and next steps.
 
-## Software & skills used
+## Issues I ran into
 
-<SoftwareChips items={['SolidWorks']} />
+- **Short title.** What went wrong and what I did about it.

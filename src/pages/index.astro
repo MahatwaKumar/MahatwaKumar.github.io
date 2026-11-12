@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import ModelViewer from '../components/ModelViewer.astro';
 import Icon from '../components/Icon.astro';
+import AboutMe from '../components/AboutMe.astro';
 import { site, filters, githubUrl } from '../lib/site';
 import { skills } from '../lib/resume';
 
@@ -61,6 +62,12 @@ const jsonLd = {
           <a href="/projects/f1-car-aerodynamics-cfd/">My F1-style CFD car (v4)</a>, simulated in Ansys Fluent. Drag to rotate.
         </p>
       </div>
+    </div>
+  </section>
+
+  <section class="section about" id="about" aria-labelledby="about-me">
+    <div class="container">
+      <AboutMe showLink />
     </div>
   </section>
 
@@ -127,7 +134,6 @@ const jsonLd = {
           <p class="eyebrow">Contact</p>
           <h2 id="contact-h">Let's talk engineering</h2>
           <p class="muted">I'm interested in internships in motorsport, EV, aerospace and robotics. Email is the fastest way to reach me.</p>
-          {/* TODO(Mahatwa): add your target internship term (e.g. "Summer 2027") if you want it here. */}
         </div>
         <div class="cactions">
           <div class="email">

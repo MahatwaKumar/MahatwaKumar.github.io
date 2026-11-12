@@ -60,3 +60,5 @@ bundles/                project source bundles (git-ignored)
 - First person, plain English, short paragraphs; describe the engineering and the software used for it.
 - Every number comes from the project files, labelled **simulated**, **predicted** or **measured**. Nothing is called validated without test data.
 - Each project keeps its stated limitations.
+- Every project page uses the same five sections, in this order: **Problem statement**, **Approach**, **Analysis** (ending with "How I checked it"), **Conclusion** (with limitations and next steps) and **Issues I ran into**.
+- Describe each step by the engineering software used ("In SolidWorks I…"); programming languages and code are not mentioned.

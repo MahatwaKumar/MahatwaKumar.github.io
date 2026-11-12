@@ -33,30 +33,37 @@ import ProcessDiagram from '../../components/ProcessDiagram.astro';
 import ProjectModel from '../../components/ProjectModel.astro';
 import SoftwareChips from '../../components/SoftwareChips.astro';
 
-## Overview
+## Problem statement
 
 Battery cells in an electric car heat up when they charge and discharge. Above about 45 °C they age faster and become less safe, so packs sit on a cold plate: a metal plate with coolant flowing through channels underneath.
 
-Channel shape is a trade-off. Narrow, winding channels cool well but need a strong pump; wide, open ones are easy to pump but can leave hot spots. I asked which layout keeps the cells coolest and most even per watt of pumping power, and how fast a real cell could charge on it.
+Channel shape is a trade-off. Narrow, winding channels cool well but need a strong pump; wide, open ones are easy to pump but can leave hot spots.
+
+The question this project answers: which channel layout keeps the cells coolest and most even per watt of pumping power, and how fast could a real cell charge on it?
 
 <div class="note">
 
-All temperatures and pressures here are **simulated predictions**. The bench rig is designed and costed but **not yet built**, so nothing has been measured.
+All temperatures and pressures here are **simulated predictions**. The bench rig is designed and costed but **not yet built or bought**, so nothing has been measured.
 
 </div>
 
-## My approach
+## Approach
 
 <ProcessDiagram
   steps={[
-    { title: 'Hand calculation', detail: '1D thermal-resistance network per cell; laminar, transitional and pin-bank correlations', tool: 'Python' },
+    { title: 'Hand calculation', detail: '1D thermal-resistance network per cell; laminar, transitional and pin-bank correlations' },
     { title: 'Design in CAD', detail: 'Three channel bodies, print files and fabrication drawings', tool: 'SolidWorks' },
     { title: 'Mesh + CFD', detail: 'Conjugate heat transfer, polyhedral mesh with prism layers', tool: 'Fluent Meshing · Ansys Fluent' },
-    { title: 'Design sweep', detail: '3 designs × 4 flows × 3 heat loads, pump power and C-rate', tool: 'Ansys Fluent' },
+    { title: 'Design study', detail: '3 designs × 4 flows × 3 heat loads, pump power and C-rate', tool: 'Ansys Fluent' },
     { title: 'Rig design', detail: '8 thermistors, power and flow sensing, ESP32 safety trips, $92 of parts', tool: 'ESP32 · C++' },
     { title: 'Build + test', detail: 'Compare with CFD at the sensor locations, per ASME V&V 20', planned: true },
   ]}
 />
+
+- **By hand calculation** I built a lumped thermal network for each cell (block → thermal paste → aluminium sheet → coolant), with the coolant temperature marched along the real flow path. I used Shah & London for laminar ducts, Gnielinski for transitional and turbulent flow, Zukauskas for the pin bank and K-factors for the minor losses. This gave me an independent number to compare the CFD against.
+- **In SolidWorks** I modeled the test module and the three channel bodies, checked each for rebuild errors and body interference, and exported the CFD geometry, print-ready STL files and fabrication drawings.
+- **In Fluent Meshing and Ansys Fluent** I set up steady conjugate heat transfer for each design to predict cell temperatures, cell-to-cell spread and plate pressure drop. I ran 36 operating points in Ansys Fluent (3 designs × 4 flow rates × 3 heat loads) and turned the results into pumping power and a sustainable charge rate.
+- **For the bench rig** I designed the sensing, the safety trips and the embedded firmware (ESP32, C++ on FreeRTOS), plus an uncertainty budget, so the rig could test the CFD predictions once it is built.
 
 ### The test module
 
@@ -100,12 +107,6 @@ I sized the module so it can be built and tested on a bench:
 
 <ProjectModel id="ev-battery-cold-plate" caption="The printed pin-fin channel body (STL from the SolidWorks model). Drag to rotate, scroll or pinch to zoom." />
 
-### Hand calculation first
-
-Before any CFD, I built a lumped network for each cell (block → thermal paste → aluminium sheet → coolant), with the coolant temperature marched along the real flow path. I used Shah & London for laminar ducts, Gnielinski for transitional and turbulent flow, Zukauskas for the pin bank and K-factors for the minor losses. This gave me an independent number to compare the CFD against.
-
-<Figure src="ev-battery-cold-plate/thermal-resistance.png" alt="Stacked horizontal bars of thermal resistance per cell for each design, split into block, paste, sheet plus convection, and coolant rise." caption="Hand calculation: where the temperature rise comes from at 0.5 L/min and 10 W per cell. Convection from the sheet dominates, and the parallel Z design is the worst." />
-
 ### CFD set-up
 
 I set up steady conjugate heat transfer in Ansys Fluent 2026 R1 (Student):
@@ -116,11 +117,21 @@ I set up steady conjugate heat transfer in Ansys Fluent 2026 R1 (Student):
 - **Outer walls:** convection to ambient.
 - **Flow model:** laminar below Re 2,300, k-ω SST above. At the serpentine's 0.5 L/min point (Re ≈ 2,070) I bracketed both models: SST is 0.9 K cooler with 7% more pressure drop, so I kept laminar as the conservative choice.
 
-**Design sweep.** 3 designs × 4 flow rates × 3 heat loads gives 36 operating points, which I covered with 14 solves. With constant properties and the inlet at ambient temperature, the temperature rise is linear in heat load, so I solved each design and flow once at 10 W per cell and scaled it. A direct 30 W solve matched the scaled result to within 10⁻¹¹ K.
+**Operating points.** 3 designs × 4 flow rates × 3 heat loads gives 36 operating points, which I covered with 14 solves in Ansys Fluent. With constant properties and the inlet at ambient temperature, the temperature rise is linear in heat load, so I solved each design and flow once at 10 W per cell and scaled it. A direct 30 W solve matched the scaled result to within 10⁻¹¹ K.
 
-## Results
+**The bench rig (designed, not built):** 8 NTC thermistors on two 16-bit ADCs, heater power sensing (INA219), a flow sensor and a water manometer. I designed the ESP32 firmware (FreeRTOS) with latched safety trips, plus a data logger and an uncertainty budget.
 
-At 0.5 L/min, 10 W per cell and a 22 °C inlet:
+### Tools I used
+
+<SoftwareChips items={['Ansys Fluent 2026 R1 (Student)', 'Fluent Meshing', 'Conjugate heat transfer', 'SOLIDWORKS 2026', 'ESP32 · C++ (FreeRTOS)', 'Hand calculation (1D thermal network)']} />
+
+**Skills:** conjugate heat transfer, thermal-resistance networks, internal-flow correlations, mesh-independence study (Celik et al. GCI), energy-balance checks, uncertainty budgets, ASME V&V 20 test planning, design for 3D printing, O-ring gland design.
+
+## Analysis
+
+<Figure src="ev-battery-cold-plate/thermal-resistance.png" alt="Stacked horizontal bars of thermal resistance per cell for each design, split into block, paste, sheet plus convection, and coolant rise." caption="Hand calculation: where the temperature rise comes from at 0.5 L/min and 10 W per cell. Convection from the sheet dominates, and the parallel Z design is the worst." />
+
+At 0.5 L/min, 10 W per cell and a 22 °C inlet (simulated):
 
 <div class="table-wrap">
 
@@ -129,7 +140,7 @@ At 0.5 L/min, 10 W per cell and a 22 °C inlet:
 | Max cell temperature rise above inlet | 4.27 K | 6.88 K | **4.40 K** |
 | Plate pressure drop | 4,041 Pa | 329 Pa | **152 Pa** |
 | Cell-to-cell temperature spread | **0.60 K** | 2.12 K | 0.99 K |
-| Worst case over the sweep (0.25 L/min, 30 W per cell) | 38.4 °C | **47.8 °C** (over the 45 °C limit) | 41.3 °C |
+| Worst case over all operating points (0.25 L/min, 30 W per cell) | 38.4 °C | **47.8 °C** (over the 45 °C limit) | 41.3 °C |
 | Hottest printed-plastic temperature, any point | 34.4 °C | 43.6 °C | 37.0 °C |
 
 </div>
@@ -150,7 +161,7 @@ At 0.5 L/min, 10 W per cell and a 22 °C inlet:
   <Figure src="ev-battery-cold-plate/serpentine-coolant-volume.png" alt="Blue render of the serpentine coolant volume used as the CFD fluid domain." caption="The serpentine coolant volume: the fluid domain I meshed for CFD." size="half" />
 </Gallery>
 
-## How I checked the results
+### How I checked it
 
 <div class="table-wrap">
 
@@ -159,7 +170,7 @@ At 0.5 L/min, 10 W per cell and a 22 °C inlet:
 | Mesh independence (serpentine; 276,606 / 613,923 / 884,522 cells) | T_max 26.26 °C ± 0.03 K; Δp 3,932 Pa ± 161 Pa (±4%), as the half-spread of the three meshes |
 | Formal GCI | Not reliable here: refinement ratio 1.13 (< 1.3) and oscillatory convergence. The Fs = 3 GCI (±0.68 K) is kept only as an upper bound |
 | Energy balance, baseline fine mesh | −0.04% (40 W in; 39.20 W to coolant, 0.81 W to ambient) |
-| Sweep convergence | 13 of 14 solves met every criterion, with final energy balance −0.26% to +0.23% |
+| Convergence over the operating points | 13 of 14 solves met every criterion, with final energy balance −0.26% to +0.23% |
 | Non-converged solve | Serpentine at 1.5 L/min hit the 1,500-iteration cap (energy imbalance −1.8%). It is outside the planned pump's range and is not a rig test point |
 | Heat-load scaling | Direct 30 W solve vs scaled 10 W solve: differences below 10⁻¹¹ K |
 | Hand calc vs CFD (baseline) | T_max 26.50 vs 26.26 °C; Δp 2,617 vs 3,932 Pa |
@@ -170,25 +181,27 @@ At 0.5 L/min, 10 W per cell and a 22 °C inlet:
 
 I also checked the planned rig against the CFD before building anything. Its predicted resolution is ±0.14 K on cell rise and ±3.6–6.3% on the energy balance (k = 2). That means pin-fin vs serpentine is only marginally resolvable at 0.5 L/min, so I made 1.0 L/min the deciding test.
 
-## Challenges & what I learned
+## Conclusion
+
+The staggered pin-fin layout is the best trade-off for this module. In my simulations it keeps the hottest cell almost as cool as the serpentine (4.40 K vs 4.27 K above the inlet at 0.5 L/min and 10 W per cell) while needing about 1/27 of the plate pressure drop (152 Pa vs 4,041 Pa). The serpentine is the most even but the hardest to pump, and the parallel Z runs hottest because its middle channels are starved of flow. For a real LFP cell, the cold plate is not what limits the charge rate: heat conduction inside the cell is.
+
+**Limitations:**
+
+- **No physical test yet.** The rig is designed and costed ($92 of parts to buy) and its ESP32 firmware compiles, but nothing has been built or measured.
+- **Assumed inputs:** the paste-joint contact resistance is the largest unknown (worth −0.06 to +0.73 K at 10 W per cell); the real cell's DC resistance and in-plane conductivity; a placeholder pump curve.
+- **Constant water properties.** One re-solve with temperature-dependent viscosity moved the rig sensor points by ≤ 0.04 K.
+- **Coarser pin-fin mesh.** Its mesh error is not quantified; by judgement I treat it as about ±0.3 K and ±15% Δp.
+
+**Next steps (planned):** print the three channel bodies, machine the blocks, build and leak-test the rig, measure the pump curve, run 3 designs × 0.5 and 1.0 L/min × 10 and 20 W per cell, and compare with the CFD per ASME V&V 20. A machined aluminium channel body is a possible later step.
+
+## Issues I ran into
 
 - **The default stopping rule stopped too early.** Fluent's default residual criterion ended solves before the temperatures had settled. I replaced it with a windowed test on the quantities I care about: T_max range below 0.01 K, outlet-temperature rise within 5%, Δp within 0.5% and energy imbalance below 1%.
 - **Reversed flow biased the outlet temperature.** 4–18% of the outlet face had reversed flow, which pulled the face-averaged outlet temperature low. I switched to the mixed-cup value from energy conservation.
-- **The cell limit forced a coarser pin-fin mesh.** The 338 pins needed 858,399 cells, close to the Student licence limit, so the pin-fin mesh is coarser than the serpentine study. By judgement I treat its uncertainty as about ±0.3 K and ±15% Δp.
+- **One solve never converged.** The serpentine at 1.5 L/min (k-ω SST) settled into a limit cycle with flat monitors and hit the 1,500-iteration cap, with a −1.8% energy imbalance. I reported it as the mean over the final window and flagged it; it is outside the planned pump's range, so it is not a rig test point.
+- **The cell limit forced a coarser pin-fin mesh.** The Student licence refused a 2.3M-cell pin-fin mesh, so I used 858,399 cells, coarser than the serpentine study. By judgement I treat its uncertainty as about ±0.3 K and ±15% Δp.
+- **Region names were lost on import.** With the Student licence's Parasolid import, the region names from SolidWorks didn't reach Fluent. I identified each region after import by its volume, centroid and contact area, which also checked that the geometry arrived intact.
+- **The heater I modeled doesn't exist.** No 12 V cartridge heater is made at the 6.35 × 50 mm size I used at first, so I changed to a 6 × 20 mm heater and re-solved. The rig sensor point moved by only −0.01 to −0.03 K, so the earlier cases stand, but the hottest point next to the heater rose by 0.41 K per 10 W and sits 1.2–1.3 K per 10 W above the sensor reading. So I'll compare the rig with the CFD temperature at the sensor location, not with T_max.
+- **The hand calculation missed the bend losses.** My serpentine pressure drop by hand was 2,617 Pa against 3,932 Pa from CFD, because the lumped K-factors underpredict the losses in the bends.
+- **The first rig cost too much.** The first parts list came to $225.60. I cut it to $92 by changing suppliers and parts without changing what the rig measures.
 - **Plastic pins are flow features, not fins.** Printed PETG has k ≈ 0.2 W/m·K, so the pins mainly stir the flow. A machined aluminium version is a possible next step.
-
-## Limitations & next steps
-
-- **Not yet validated.** The rig is designed and costed ($92 of parts to buy) and its ESP32 firmware compiles, but nothing has been built or measured.
-- **Assumed inputs:** the paste-joint contact resistance is the largest unknown (worth −0.06 to +0.73 K at 10 W per cell); the real cell's DC resistance and in-plane conductivity; a placeholder pump curve.
-- **Constant water properties.** One re-solve with temperature-dependent viscosity moved the rig sensor points by ≤ 0.04 K.
-
-**The bench rig (designed, not built):** 8 NTC thermistors on two 16-bit ADCs, measured heater power (INA219), a flow sensor and a water manometer. I designed the ESP32 firmware (FreeRTOS) with latched safety trips, plus a data logger and an uncertainty budget.
-
-**Planned:** print the three channel bodies, machine the blocks, build and leak-test the rig, measure the pump curve, run 3 designs × 0.5 and 1.0 L/min × 10 and 20 W per cell, and compare with the CFD per ASME V&V 20.
-
-## Software & skills used
-
-<SoftwareChips items={['Ansys Fluent 2026 R1 (Student)', 'Fluent Meshing', 'Conjugate heat transfer', 'SOLIDWORKS 2026', 'ESP32 · C++ (FreeRTOS)', 'Python (hand calculation)']} />
-
-**Skills:** conjugate heat transfer, thermal-resistance networks, internal-flow correlations, mesh-independence study (Celik et al. GCI), energy-balance checks, uncertainty budgets, ASME V&V 20 validation planning, design for 3D printing, O-ring gland design.
