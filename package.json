@@ -7,12 +7,7 @@
     "dev": "astro dev",
     "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
-    "check": "astro check && node scripts/check-links.mjs",
-    "prepare-assets": "node scripts/prepare-assets.mjs",
-    "convert-models": "node scripts/convert-models.mjs",
-    "posters": "node scripts/make-posters.mjs",
-    "qa": "node scripts/qa-screens.mjs",
-    "voice-check": "node scripts/voice-check.mjs"
+    "check": "astro check"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.12",
