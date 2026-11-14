@@ -4,17 +4,17 @@ shortTitle: 'Iris Claw: 6-DOF Robotic Arm'
 slug: 'iris-claw'
 date: 2026-01-01
 status: 'in-progress'
-summary: 'I designed a low-cost 6-DOF robotic arm with a four-finger, tendon-driven claw in SolidWorks: 29 part models, three posed assemblies, a general-arrangement drawing and a static torque analysis, with all 11 hobby servos selected against worst-case joint loads. The shoulder is the critical joint, at a predicted safety factor of 1.24 with the arm fully stretched out and a 100 g payload. The arm has not been printed yet.'
-cardSummary: '29-part SolidWorks design with a tendon-driven claw; 11 servos sized against worst-case static joint torques.'
+summary: 'I designed a low-cost 6-DOF robotic arm with a four-finger, tendon-driven claw in SolidWorks, and sized its 11 hobby servos with a static torque analysis. I then simulated it in NVIDIA Isaac Sim with servo-like drives, under gravity, in 2,135 tests. Those tests mapped which poses a cheaper servo set can hold and which motion profiles are safe. The shoulder is the critical joint in every analysis. The first parts are printing; apart from a printed fit-test coupon, nothing has been measured yet.'
+cardSummary: '29-part SolidWorks design with a tendon-driven claw, simulated in Isaac Sim: 11 servos sized and a safe operating map built from 2,135 tests.'
 heroImage: '../../assets/projects/iris-claw/power-grip-pose.png'
 heroAlt: 'SolidWorks render of the Iris Claw arm in its power-grip pose: grey printed links, orange servo housings and a teal base ring.'
 keyResults:
   - { value: '577.5', unit: 'mm', label: 'Reach, shoulder axis to claw tips', qualifier: 'from CAD' }
   - { value: '1.24', unit: 'SF', label: 'Shoulder safety factor, worst case (critical joint)', qualifier: 'predicted' }
-  - { value: '1,759.6', unit: 'g', label: 'Total mass including bearing', qualifier: 'predicted' }
+  - { value: '0.81', unit: '°', label: 'Worst joint error holding 5 reference poses in Isaac Sim', qualifier: 'simulated' }
   - { value: '11', unit: 'servos', label: '6 arm joints + 4 finger drives + swivel', qualifier: 'design' }
 tags: ['cad', 'robotics']
-software: ['SolidWorks']
+software: ['SolidWorks', 'NVIDIA Isaac Sim', 'PrusaSlicer']
 featured: false
 order: 6
 model3d:
@@ -32,6 +32,7 @@ import Chart from '../../components/Chart.astro';
 import ProcessDiagram from '../../components/ProcessDiagram.astro';
 import SoftwareChips from '../../components/SoftwareChips.astro';
 import ProjectModel from '../../components/ProjectModel.astro';
+import Video from '../../components/Video.astro';
 
 ## Problem statement
 
@@ -47,7 +48,7 @@ The question for this phase: can every joint hold its worst-case static load wit
 
 <div class="note">
 
-The design phase is complete. All numbers are **predicted** from the CAD model and a static calculation; nothing has been printed or measured yet.
+The CAD and the simulations are complete and the first parts are printing. Every number on this page is **predicted** from the CAD model and a static calculation, or **simulated** in Isaac Sim. The only measurement so far is a printed fit-test coupon.
 
 </div>
 
@@ -60,7 +61,8 @@ The design phase is complete. All numbers are **predicted** from the CAD model a
     { title: 'Kinematic model', detail: '4×4 homogeneous transforms give every component\'s position for any joint angles' },
     { title: 'Posed assemblies + drawing', detail: 'Three poses, A3 general arrangement with BOM', tool: 'SolidWorks' },
     { title: 'Mass + torque', detail: 'Mass properties of each part; worst-case static torque per joint', tool: 'SolidWorks' },
-    { title: 'Print + assemble', detail: 'Printing, wiring and servo calibration', planned: true },
+    { title: 'Physics simulation', detail: 'Servo-like drives under gravity: poses, safe zones, motion profiles, robustness', tool: 'Isaac Sim' },
+    { title: 'Print + assemble', detail: 'Fit-test coupon done; printing, wiring and servo calibration', planned: true },
   ]}
 />
 
@@ -69,6 +71,11 @@ I started from one shared table of dimensions (servo bodies, link lengths, finge
 - **In SolidWorks** I modeled all 29 parts as parametric parts and gave each one its material and colour. I built three posed assemblies (idle, peace sign, power grip) of 47 components each, made an A3 general-arrangement drawing with a ballooned bill of materials, and took the mass properties of every part for the load analysis.
 - **For the kinematics** I described the arm as a chain of 4×4 homogeneous transforms, from the base yaw joint out to each finger segment. Every component in each SolidWorks assembly sits exactly where this model puts it for that pose's joint angles.
 - **For the loads** I took the arm's worst static case: stretched out horizontally with a 100 g object at the claw tips. I summed the moment of every link, servo and the payload about each pitch joint, and compared the result with that servo's rated torque.
+- **In NVIDIA Isaac Sim 5.1** I imported the arm as a URDF robot description, with each link's mass, inertia and centre of mass taken from the SolidWorks parts. Each joint drive is set up to behave like a hobby servo: it reaches stall torque at 3° of position error, and it has damping tuned from step tests, a rated speed limit and a deadband. Stall torques are datasheet values at 5 V. The finger middle and tip joints follow the knuckle, standing in for the tendon. I ran the physics at 240 Hz under gravity:
+  - **Reference poses** with the original servo set: 5 poses, each held for 3 s.
+  - **Collision sweep:** I moved the parts along a full motion tour and checked every pair of parts for overlap.
+  - **Cheaper-servo study:** 2,135 tests for a budget servo set (DS3218, MG996R and MG90S; stall torques 1.77, 0.95 and 0.18 N·m). These were servo step tests, a 1,567-pose static sweep, a search for the lowest-strain posture for 48 hand targets, 12 motion profiles on 5 moves, lighter-part scaling and robustness variants.
+- **In PrusaSlicer** I prepared the parts for printing and printed a fit-test coupon on the target printer to set the hole sizes for pins and filament.
 
 ### Design choices
 
@@ -86,13 +93,23 @@ I started from one shared table of dimensions (servo bodies, link lengths, finge
 
 <Figure src="iris-claw/kinematics.png" alt="Three 3D skeleton plots of the arm's joint axes and fingers for the idle, peace-sign and power-grip poses." caption="Kinematic model of the three poses: joint axes in orange, fingers in amber. Every component in the assembly is placed from this model." />
 
+<Video
+  src="/videos/iris-claw/isaac-sim-pose-tour.mp4"
+  poster="/videos/iris-claw/isaac-sim-pose-tour-poster.webp"
+  title="Isaac Sim pose tour of the Iris Claw arm"
+  width={1184}
+  height={696}
+  duration="2:17"
+  caption="Isaac Sim: the arm runs a 13-move tour under gravity, with each drive capped at its servo's stall torque (original servo set). The moves are claw open and close, grip, lift, base sweeps of ±80°, wrist roll and a full horizontal reach. Simulated."
+/>
+
 <ProjectModel id="iris-claw" caption="The full assembly in its idle pose: all 47 components (29 different parts), each placed from the kinematic model, as in the SolidWorks assembly. Drag to rotate." />
 
 ### Tools I used
 
-<SoftwareChips items={['SOLIDWORKS 2026 (parts, assemblies, drawings, BOM, mass properties)', 'Design for 3D printing', 'STEP / STL export']} />
+<SoftwareChips items={['SOLIDWORKS 2026 (parts, assemblies, drawings, BOM, mass properties)', 'NVIDIA Isaac Sim 5.1 (PhysX articulation)', 'URDF', 'PrusaSlicer', 'Design for 3D printing', 'STEP / STL export']} />
 
-**Skills:** robot kinematics (homogeneous transforms), mechanism and joint design, tendon-driven finger design, servo selection, static torque and mass analysis, safety factors, engineering drawing.
+**Skills:** robot kinematics (homogeneous transforms), mechanism and joint design, tendon-driven finger design, servo selection and modelling, static torque and mass analysis, safety factors, physics simulation, motion profiling, engineering drawing, print tolerancing.
 
 ## Analysis
 
@@ -128,27 +145,99 @@ The torque falls quickly from the shoulder outwards, because each joint only car
   <Figure src="iris-claw/printed-parts.png" alt="Grid of twelve grey printed parts rendered from their STL files, each labelled with name and size." caption="Twelve of the printed parts, rendered from their print-ready STL files." size="half" />
 </Gallery>
 
+### Simulation in Isaac Sim
+
+All values in this section are **simulated**, with no payload unless stated.
+
+**Reference poses (original servo set).** All 5 poses held within 0.81° of their targets. The shoulder needed 1.82 N·m at full horizontal reach, against 3.43 N·m for the DS3235. That run has no payload, so it isn't directly comparable with the 2.78 N·m from the hand calculation above, which includes 100 g at the claw.
+
+<div class="table-wrap">
+
+| Pose | Worst joint error | Shoulder torque |
+|---|---|---|
+| Zero | 0.02° | 0.02 N·m |
+| Idle | 0.58° | 0.26 N·m |
+| Open | 0.62° | 0.14 N·m |
+| Reach (full horizontal) | 0.76° | **1.82 N·m** |
+| Grip | 0.81° | 0.84 N·m |
+
+</div>
+
+**Cheaper servos: which poses can they hold?** I swept 1,567 poses across shoulder, elbow and wrist angles and recorded each joint's load as a fraction of its stall torque.
+
+<div class="table-wrap">
+
+| Zone | Worst joint load | Poses | Share |
+|---|---|---|---|
+| Safe (continuous use) | up to 40% of stall | 266 | 17.0% |
+| Brief only | 40 to 70% | 552 | 35.2% |
+| Avoid | 70 to 100% | 710 | 45.3% |
+| Can't hold | over 100% | 39 | 2.5% |
+
+</div>
+
+<Figure src="iris-claw/safe-zone-map.png" alt="Five heat maps of shoulder angle against elbow angle, one per wrist angle, coloured green, yellow, orange and red by worst joint load, with white where the arm would hit the table." caption="Safe-zone map for the cheaper servo set: worst joint load as a fraction of stall, shoulder × elbow, at 5 wrist angles. Green up to 40%, yellow up to 70%, orange below 100%, red can't hold; white would hit the table. Simulated, no payload." />
+
+Fully stretched out, the shoulder needs 103% of its stall torque and the elbow 83%, so the cheaper set can't hold that pose. The wrist never goes above 15% of stall. The safe band is where the forearm points roughly upwards (shoulder and elbow angles summing to about zero). From this map I set software limits ("gentle mode") that keep every joint at or below 40% of stall for each shoulder angle.
+
+**Motion profiles.** On a base sweep, a trapezoid profile of 200 °/s and 800 °/s² finished the move in 0.85 s at about 63% peak load and 0.37° overshoot. A raw step command from home to the idle pose instead spiked above 5× stall with 10° of overshoot, so every move is commanded through a profile.
+
+<Video
+  src="/videos/iris-claw/isaac-sim-fast-motion.mp4"
+  poster="/videos/iris-claw/isaac-sim-fast-motion-poster.webp"
+  title="Isaac Sim fast motion tests"
+  width={1280}
+  height={684}
+  duration="0:30"
+  caption="Isaac Sim: the fastest motion-profile tests (300 °/s, 2,000 °/s²) with the cheaper servo set. The panel shows the current test and the peak servo load. Simulated."
+/>
+
+**Posture, mass and robustness.**
+
+- Choosing the lowest-strain hand angle and elbow bend for a target cut the worst joint load by 5 percentage points on average, and by 23 at best, over 48 hand targets.
+- Cutting the printed-part mass by 15% lowers the joint torques by about 10%, and a 30% cut by about 19%.
+- The safe zone survives a 20% weaker servo or 20% heavier parts: 10 of its 11 test poses still held within 2°. The brief zone doesn't: with both changes, only 1 of 20 held.
+- In the collision sweep the claws touch at a knuckle angle of −5.8° (4.5 mm of overlap at −8°), so I limited the knuckle range to −5° to +30°.
+
+<Gallery cols={3}>
+  <Figure src="iris-claw/isaac-tour-raised.png" alt="Isaac Sim render of the arm raised with the claw open on a blue grid floor." caption="Isaac Sim: arm raised, claw open." size="half" />
+  <Figure src="iris-claw/isaac-tour-upright.png" alt="Isaac Sim render of the arm standing straight up." caption="Isaac Sim: upright pose." size="half" />
+  <Figure src="iris-claw/isaac-tour-reach.png" alt="Isaac Sim render of the arm stretched out horizontally near the floor." caption="Isaac Sim: full horizontal reach, the shoulder's worst case." size="half" />
+</Gallery>
+
+**Fit test (measured).** I printed a tolerance coupon on the target printer. The D-shaped press hole needed +0.05 mm and the filament press hole +0.15 mm (1.85 to 2.0 mm). Both changes are in the current design. I also reworked the printed parts (version 5) so that every piece prints in under 8.5 h.
+
+<Figure src="iris-claw/fit-test-coupon.png" alt="Render of the orange fit-test coupon: a bar with a row of holes of increasing size and a small test pin." caption="The fit-test coupon: one row of hole sizes for pin and filament fits, about 106 × 29 × 10 mm and 30 min to print." size="half" />
+
 ### How I checked it
 
 - **Assembly placement check.** I compared the bounding box of every component as placed in SolidWorks with the box predicted by my kinematic model. The worst difference on the idle pose was **0.00 mm** over 47 components, which confirms the placement used for every pose and for the torque analysis.
 - **Single-body check.** I confirmed every part is one solid body, which catches features that leave loose fragments. The only exception is the upper-arm side panels, which are two separate panels by design.
 - **Materials and colours.** After saving, I checked every part's appearance values to confirm they were stored.
 - **Hand check of the masses.** The servo total (375.4 g) matches the catalogue masses, and the printed mass is the sum of the individual parts.
-- **Not done:** no finite-element analysis, mesh study or physical test. The torques are static (no acceleration, friction or tendon loads).
+- **Simulation model against CAD.** Placing every part with the robot description's joint chain matched the SolidWorks placements within 0.005 mm, so the simulated arm has the same geometry as the CAD.
+- **Static hand calculation against simulation.** Both put the shoulder as the most loaded joint, then the elbow, with the wrist far below.
+- **Not done:** no finite-element analysis, mesh study or physical test of the arm. The hand-calculated torques are static (no acceleration, friction or tendon loads).
 
 ## Conclusion
 
 The design works on paper: with the servos I chose, every joint can hold the stretched-out arm and a 100 g object. **The shoulder is the critical joint**, at a predicted safety factor of 1.24. That is too thin for a hobby servo, whose real torque is often below its datasheet value. The elbow (1.44) and wrist (2.77) have more margin.
 
-To raise the shoulder margin I've proposed three changes: a spring counterbalance at the shoulder, lighter infill in the links, and an upgrade of the elbow servo to a DS3235, which shares the same body size. These are on paper only; they are not yet in the CAD model or the analysis.
+The Isaac Sim tests agree and add the operating rules. With the original servos, the arm held all 5 reference poses within 0.81°. With the cheaper set, only 17% of poses are safe for continuous use, the stretched-out pose can't be held at all, and safe operation means keeping the forearm roughly upright, moving through smooth profiles rather than raw steps, and staying inside the gentle-mode limits. Lighter parts help almost one-for-one: 15% less printed mass gives about 10% less joint torque.
+
+To raise the shoulder margin I've also proposed a spring counterbalance at the shoulder and an upgrade of the elbow servo to a DS3235, which shares the same body size. These are on paper only.
 
 **Limitations:**
 
-- **No hardware yet.** Nothing has been printed or assembled.
-- **Static analysis only.** Dynamic loads from acceleration, gearbox backlash, tendon friction and servo heating are not modelled.
+- **Almost no hardware data.** Only the fit-test coupon is measured. Grip force, finger speed, tendon friction, joint accuracy, heating and the gap between simulation and the real arm are unknown.
+- **Datasheet servos.** Stall torques are datasheet values; real budget servos vary.
+- **Not modelled:** gearbox backlash, servo heating and tendon friction. The fingers are idealised joints that follow the knuckle.
+- **No payload in the sweep.** The safe-zone map is a static hold with an empty claw; any payload moves every zone towards higher load.
+- **Self-collision was off in the physics runs.** Collisions were checked separately with the mesh sweep.
+- **Older servo set in the tour video.** The pose tour uses the original servos; the cheaper-servo results and the version 5 printable parts came later.
 - **Assumed mass factor.** Real slicer weights may differ from the 50% fill assumption.
 
-**Next steps (not started):** printing and assembly; wiring and servo calibration; export to URDF and a digital twin in NVIDIA Isaac Sim; webcam hand-tracking teleoperation; reinforcement and imitation learning of tasks.
+**Next steps:** finish printing and assembly; wiring and servo calibration; measure joint accuracy and compare with the simulation; webcam hand-tracking teleoperation; reinforcement and imitation learning of tasks.
 
 ## Issues I ran into
 
@@ -157,3 +246,10 @@ To raise the shoulder margin I've proposed three changes: a spring counterbalanc
 - **SolidWorks crashed when I reopened the posed assemblies.** Closing all three and reopening them crashed SolidWorks 2026, so I saved each pose's renders straight from the open assembly instead.
 - **Posed, not mated.** To make the three poses match the kinematic model exactly, I fixed each component in place rather than using mates. The trade-off is that the joints can't be dragged in SolidWorks to try new poses.
 - **Servo bodies are from datasheets.** I modeled them from typical datasheet dimensions. They need checking against the real servos before printing, or the cheek-plate windows may not fit.
+- **Exported meshes came out shifted.** The STL files from SolidWorks landed in positive coordinate space instead of where the parts sit. I moved each mesh back by the difference between its centroid and the part's centre of mass from CAD.
+- **The joints locked up in Isaac Sim.** The friction values in the robot description became joint friction that grows with load, so the loaded joints stuck. I set friction to zero and used damping for the losses instead.
+- **The arm sagged under gravity.** The drives Isaac Sim created on import were far softer than a hobby servo. I switched to force drives with explicit stiffness and damping and a small armature. Before that, a wrong articulation root had left every joint frozen.
+- **A false clash at the hand roll.** The collision sweep reported a clash because the servo horn was modeled as part of the servo body instead of turning with the palm. Once I attached it to the right part, the clash disappeared.
+- **Two of my test rules were wrong.** My first rule for choosing damping picked the wrong value for the elbow servo, because that joint was at stall in the test pose and never settled; I changed it to ignore saturated joints. A "settled within 1°" rule also failed, because a loaded servo sits about 2° off target by design, so I judged moves by overshoot and peak load instead.
+- **The laptop was below Isaac Sim's recommended spec.** It has an RTX 4060 with 8 GB. It ran, but the older graphics driver blocked hardware video encoding, so the videos were encoded on the CPU.
+- **PrusaSlicer quietly ignored my printer profile** and produced generic print files. I caught it by checking the header of the output file, and fixed it by selecting the printer maker's full profile.

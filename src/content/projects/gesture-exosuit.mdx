@@ -4,28 +4,35 @@ shortTitle: 'Gesture-Controlled Elbow Exosuit'
 slug: 'gesture-exosuit'
 date: 2026-01-01
 status: 'in-progress'
-summary: 'I am designing a low-cost powered elbow brace for people who cannot move one arm: the user arms it with three teeth taps, picked up by a sensor pod behind the ear, then raises or lowers the forearm by tilting the head. I sized the cable drive from a rigid-body dynamics model of the forearm, checked the free-fall case against an exact energy balance, and modeled the 41-part assembly in SolidWorks with a drawing and bill of materials. Nothing is built yet.'
-cardSummary: 'Hands-free powered elbow brace, armed by teeth taps and driven by head tilt; drive sized from a dynamics model.'
-heroImage: '../../assets/projects/gesture-exosuit/full-concept.png'
-heroAlt: 'SolidWorks render of the elbow exosuit on a translucent reference body: back plate with actuator, cable to an elbow pulley, forearm and upper-arm cuffs, and an ear pod.'
+summary: 'I am designing a low-cost powered elbow brace for people who cannot move one arm. The user arms it with three teeth taps, picked up by a sensor pod behind the ear, then raises or lowers the forearm by tilting the head. I sized the cable drive from a rigid-body dynamics model of the forearm and checked the free-fall case against an exact energy balance. I then modeled revision B in SolidWorks, with 42 parts and zero interferences, a drawing and a bill of materials. I also made an animated simulation of the control behaviour on that model. Nothing is built yet.'
+cardSummary: 'Hands-free powered elbow brace, armed by teeth taps and driven by head tilt; drive sized from a dynamics model, 42-part SolidWorks design.'
+heroImage: '../../assets/projects/gesture-exosuit/rev-b-elbow.png'
+heroAlt: 'SolidWorks render of the revision B elbow brace: white printed cuffs and hinge bars, dark straps, a teal elbow pulley and the cable housing running up from the elbow.'
 keyResults:
   - { value: '6.34', unit: 'N·m', label: 'Peak elbow torque, large adult (1.26× margin to 8 N·m)', qualifier: 'predicted' }
   - { value: '912', unit: 'N', label: 'Actuator rod force at rating, vs a 1,500 N actuator', qualifier: 'predicted' }
+  - { value: '0', unit: 'clashes', label: 'Interferences in the 42-part assembly (26 found and fixed)', qualifier: 'from CAD' }
   - { value: '3.6', unit: 's', label: 'Full lift, 0 to 115°', qualifier: 'predicted' }
-  - { value: '41', unit: 'parts', label: 'SolidWorks assembly with drawing and BOM', qualifier: 'design' }
 tags: ['cad', 'robotics', 'embedded']
 software: ['SolidWorks', 'ESP32-S3', 'nRF52840', 'BLE']
 featured: false
 order: 7
+model3d:
+  src: '/models/gesture-exosuit.glb'
+  poster: '/models/gesture-exosuit-poster.webp'
+  alt: 'Interactive 3D model of the revision B exosuit, built from all 42 SolidWorks parts: shoulder harness, cable housing, hip pack, elbow brace at 90° and the ear pod on its neckband.'
+  label: 'Revision B, elbow at 90°'
+  cameraOrbit: '35deg 75deg auto'
 downloads:
-  - { label: 'Assembly drawing and BOM', file: '/files/gesture-exosuit/gesture-exosuit-assembly-drawing.pdf', description: 'SolidWorks assembly drawing with a 41-item bill of materials' }
+  - { label: 'Assembly drawing and BOM (revision B)', file: '/files/gesture-exosuit/gesture-exosuit-assembly-drawing.pdf', description: 'SolidWorks assembly drawing with balloons and a bill of materials' }
 ---
 import Figure from '../../components/Figure.astro';
 import Gallery from '../../components/Gallery.astro';
 import Chart from '../../components/Chart.astro';
-import CompareSlider from '../../components/CompareSlider.astro';
 import ProcessDiagram from '../../components/ProcessDiagram.astro';
 import SoftwareChips from '../../components/SoftwareChips.astro';
+import ProjectModel from '../../components/ProjectModel.astro';
+import Video from '../../components/Video.astro';
 
 ## Problem statement
 
@@ -37,7 +44,7 @@ The question for this phase: can a small cable drive lift the forearm of a large
 
 <div class="note">
 
-This page covers the **design phase** (5 of 13 milestones). No prototype has been built, so every performance number is a **design prediction**, not a measurement.
+This page covers the **design phase** (6 of 13 milestones). No prototype has been built, so every performance number is a **design prediction** or a value taken from the CAD model, not a measurement on hardware.
 
 </div>
 
@@ -48,43 +55,47 @@ This page covers the **design phase** (5 of 13 milestones). No prototype has bee
     { title: 'Control concept', detail: 'Teeth-tap arming, head-tilt commands, independent watchdog' },
     { title: 'Sizing model', detail: 'Rigid-body forearm, two user sizes, torque vs angle, free fall' },
     { title: 'Verification', detail: 'Time-step convergence vs exact energy balance' },
-    { title: 'CAD + drawing', detail: '41-part assembly, 14 renders, drawing with BOM, 8 printable parts', tool: 'SolidWorks' },
+    { title: 'CAD revision B', detail: '42 parts, interference check, renders, drawing with BOM, 12 printable parts', tool: 'SolidWorks' },
+    { title: 'Control simulation', detail: 'Planned control behaviour animated on the CAD model' },
     { title: 'Build + test', detail: 'Firmware, printing, assembly, dummy-arm bench tests', planned: true },
   ]}
 />
 
-- **For the control concept** I put a Seeed XIAO nRF52840 Sense board and a piezo element in each ear pod. Three teeth taps within a short timing window arm the brace. After that, head tilt commands lift, lower or stop, and the brace disarms itself after a timeout. The arming step is meant to stop chewing, talking and ordinary head movement from moving the arm.
-- **For the electronics** the pods send commands over Bluetooth Low Energy (BLE) to an ESP32-S3 controller, which drives a BTS7960 H-bridge and reads a potentiometer on the elbow. A separate ATtiny85 watchdog opens a relay and cuts motor power if the controller's heartbeat stops, so a controller fault cannot keep the motor running.
-- **For the drive train** I chose a 12 V self-locking linear actuator on a back plate. It pulls a cable through a 4:1 pulley block, then through a Bowden housing to a 50 mm pulley at the elbow. The 100 mm cable stroke on the 50 mm pulley gives the 0 to 115° elbow range.
+- **For the control concept** I put a Seeed XIAO nRF52840 Sense board (with a motion sensor) and a piezo element in an ear pod. Three quick teeth taps within a short timing window arm the brace. After that, tilting the head forward lifts the forearm, tilting it back lowers it, and holding the head level (within ±5°) holds the arm still. The brace disarms itself after 8 s without a command. The arming step is meant to stop chewing, talking and ordinary head movement from moving the arm.
+- **For the electronics** the pod sends commands over Bluetooth Low Energy (BLE) to an ESP32-S3 controller, which drives a BTS7960 H-bridge and reads a potentiometer at the elbow. A separate ATtiny85 watchdog opens a relay 0.25 s after the controller's heartbeat stops, so a controller fault cannot keep the motor running.
+- **For the drive train** I chose a 12 V self-locking linear actuator in a hip pack. It pulls a Dyneema line through a 4:1 pulley block, then through a Bowden housing up the back and over the shoulder to a 50 mm pulley at the elbow. The 100 mm of cable stroke on the 50 mm pulley gives the 0 to 115° elbow range. Because the actuator self-locks, the arm holds its position if power is lost.
 - **For the dynamics model** I treated the forearm and hand as one rigid segment using standard anthropometric ratios: mass 2.2% of body mass, length 14.6% of height, centre of mass at 68.2% of the length and radius of gyration 82.7%. I checked two users, a median adult (75 kg, 1.75 m) and a large adult (100 kg, 1.85 m), and added the brace's moving parts (0.25 kg at 0.12 m), 0.5 kg held in the hand and 2 rad/s² of elbow acceleration. From that I computed:
   - peak torque and the margin to the 8 N·m drive rating;
   - cable tension at the elbow and at the pack;
   - torque against elbow angle from 0 to 115°;
   - the work for a full lift, the free fall from 90° if the drive fails (stepped through time at 0.2 ms), and cuff contact pressure;
   - actuator force, rod travel, lift time and daily energy against the battery.
-- **In SolidWorks** I modeled all 41 parts (including 2 reference bodies for the user's arm and torso) and assembled them on the body, so I could check where the back module, cable run, cuffs and ear pods sit. I rendered 14 views, made an assembly drawing with a 41-item bill of materials, and exported the 8 parts meant for 3D printing as STL: cuff shells, elbow pulley, cable brackets, sheaves, enclosure, stop housing and both ear pods.
+- **In SolidWorks** I modeled revision B: 42 parts in one assembly, posed at 90° of elbow flexion. It has contoured open C-shell cuffs with foam liners and magnetic-buckle straps, printed hinge bars on both sides of the elbow, a wrist splint, the hip pack with its electronics, and the ear pod on a neckband. I ran an interference check on the full assembly, took the mass properties of every part, rendered 14 views, made an assembly drawing with a bill of materials, and exported the 12 parts meant for 3D printing in PETG as STL.
+- **To show the control behaviour** I animated the planned control logic on the real CAD model: a head and jaw seen from the side, and a live panel with elbow angle, torque, cable tension and sensor signals.
 
-<Figure src="gesture-exosuit/architecture.png" alt="Block diagram: ear pods send BLE commands to the ESP32-S3 controller, which drives the H-bridge and linear actuator; the force goes through a 4:1 pulley block and Bowden cable to the 50 mm elbow pulley; an ATtiny85 watchdog can cut motor power." caption="Signal and force path (planned design). The watchdog can cut motor power independently of the controller." />
-
-<CompareSlider
-  before="gesture-exosuit/iso-with-body.png"
-  after="gesture-exosuit/iso-hardware-only.png"
-  beforeLabel="On the body"
-  afterLabel="Hardware only"
-  beforeAlt="Isometric render of the exosuit on a translucent reference body."
-  afterAlt="Isometric render of the exosuit hardware alone, with the reference body hidden."
-  caption="Drag to hide the reference body and see the brace hardware: back plate, actuator, pulley block, Bowden cable, elbow pulley and cuffs."
+<Video
+  src="/videos/gesture-exosuit/control-demo.mp4"
+  poster="/videos/gesture-exosuit/control-demo-poster.webp"
+  title="Simulated control cycle of the elbow exosuit"
+  width={1920}
+  height={1080}
+  duration="0:29"
+  caption="Simulated control cycle on the SolidWorks model. Chewing is ignored, and three teeth taps arm the brace. Head tilt then lifts, holds and lowers the forearm, and the brace disarms after 8 s without a command. The torque on the panel is static (arm plus a 0.5 kg cup); the tap thresholds are placeholders until real data is recorded."
 />
+
+<ProjectModel id="gesture-exosuit" caption="All 42 parts of revision B, placed as in the SolidWorks assembly with the elbow at 90°. Drag to rotate." />
+
+<Figure src="gesture-exosuit/architecture.png" alt="Block diagram: ear pod sends BLE commands to the ESP32-S3 controller, which drives the H-bridge and linear actuator; the force goes through a 4:1 pulley block and Bowden cable to the 50 mm elbow pulley; an ATtiny85 watchdog can cut motor power." caption="Signal and force path. The watchdog can cut motor power independently of the controller." />
 
 ### Tools I used
 
-<SoftwareChips items={['SOLIDWORKS (parts, assemblies, renders, drawing + BOM)', 'ESP32-S3', 'XIAO nRF52840 Sense', 'BLE', 'BTS7960 H-bridge', 'ATtiny85 watchdog']} />
+<SoftwareChips items={['SOLIDWORKS (parts, assembly, interference check, mass properties, renders, drawing + BOM)', 'ESP32-S3', 'XIAO nRF52840 Sense', 'BLE', 'BTS7960 H-bridge', 'ATtiny85 watchdog', 'PETG 3D printing']} />
 
 **Skills:** rigid-body statics and dynamics, anthropometric modelling, actuator and transmission sizing, energy budgets, numerical time integration and convergence checks, mechatronic architecture with an independent fail-safe, design for 3D printing.
 
 ## Analysis
 
-All values are **predicted** from the sizing model.
+All values in the next two tables are **predicted** from the sizing model.
 
 <div class="table-wrap">
 
@@ -118,43 +129,62 @@ The torque peaks with the forearm horizontal (90°). The forearm and hand make u
 
 At the full 8 N·m rating the rod force is 912 N, well inside the 1,500 N actuator, and a day of use takes under half of the usable pack energy. If the drive fails, the forearm would fall from horizontal in about 0.3 s and reach about 2.3 m/s at the wrist.
 
-<Gallery>
-  <Figure src="gesture-exosuit/elbow-pulley.png" alt="Close-up render of the elbow: 50 mm pulley, uprights, and blue-strapped forearm and upper-arm cuffs." caption="Elbow pulley, uprights and cuffs." size="half" />
-  <Figure src="gesture-exosuit/back-module.png" alt="Render of the back plate with the linear actuator, 4:1 pulley block, battery and electronics enclosure." caption="Back module: actuator, 4:1 pulley block, battery and electronics." size="half" />
-  <Figure src="gesture-exosuit/electronics.png" alt="Top-down render of the electronics enclosure layout with controller, motor driver, watchdog and relay." caption="Electronics enclosure layout: controller, motor driver, watchdog and relay." size="half" />
-  <Figure src="gesture-exosuit/ear-pod.png" alt="Render of the behind-the-ear sensor pod with its cable." caption="Behind-the-ear sensor pod." size="half" />
-</Gallery>
+From the SolidWorks model of revision B:
 
-<Figure src="gesture-exosuit/assembly-drawing.png" alt="Assembly drawing sheet with exploded views, numbered balloons and a 41-item bill of materials." caption="Assembly drawing with the 41-item bill of materials." />
+<div class="table-wrap">
+
+| Quantity (from CAD) | Value |
+|---|---|
+| Parts in the assembly | 42 |
+| Interferences: first check / final check | 26 / **0** |
+| Forearm-side brace parts: mass / centre of mass from the hinge | 239 g / 145 mm |
+| Gravity torque of those parts (model assumed 0.29 N·m) | 0.34 N·m |
+| Printed parts / total PETG mass | 12 / about 800 g |
+
+</div>
+
+The brace parts that move with the forearm came out slightly heavier than the sizing model assumed. Putting the CAD value back in raises the large-adult peak from 6.34 to about 6.38 N·m, and the margin drops from 1.26× to about 1.25×.
+
+<Gallery>
+  <Figure src="gesture-exosuit/rev-b-hip-pack.png" alt="Render of the closed hip pack with the cable housing leaving the top and a strap through the back." caption="Hip pack, closed." size="half" />
+  <Figure src="gesture-exosuit/rev-b-hip-pack-open.png" alt="Render of the open hip pack: linear actuator, pulley blocks, battery, motor driver with heatsink, controller and watchdog boards, relay and wiring." caption="Hip pack, open: actuator and 4:1 pulley block, battery, motor driver, controller, watchdog and relay." size="half" />
+  <Figure src="gesture-exosuit/rev-b-ear-pod.png" alt="Close-up render of the ear pod with its status light and the neckband cable." caption="Ear pod with status light, on its neckband." size="half" />
+  <Figure src="gesture-exosuit/rev-b-left.png" alt="Side render of the whole system: harness, cable housing down the back, hip pack and brace with the elbow pulley." caption="Side view: harness, cable run, hip pack and brace." size="half" />
+</Gallery>
 
 ### How I checked it
 
 - **Free-fall time-step convergence.** I reran the 90° to 0° fall with steps of 0.8, 0.4, 0.2, 0.1 and 0.05 ms and compared the final angular speed with the exact value from conservation of energy, ω = √(2·T<sub>g</sub>/I). The largest error was 0.00021% (median adult, 0.8 ms step), shrinking about 4× each time the step is halved. Fall times agree within 0.4 ms across all steps, so the 0.2 ms step I used is converged.
 - **Kinematic consistency.** The 100 mm cable stroke on a 50 mm pulley gives 115° of elbow range, matching the range used for the torque and work calculations.
 - **Sensitivity to user size.** I ran every load case for both users. The large adult sets the design margin: 1.26× on torque, and 912 N on the rod against a 1,500 N actuator.
-- **CAD build check.** I confirmed all 41 components were inserted, the 8 STL files exported and the drawing saved.
+- **Interference check in SolidWorks.** The first check of the full assembly found 26 overlaps. After I fixed them all, the final check found none.
+- **CAD mass against the model.** I compared the mass properties of the moving brace parts with the value assumed in the sizing model (see above).
 - **Not done yet:** no finite-element analysis, no physical tests, and no measured friction or cable stretch.
 
 <Chart id="ex-freefall" title="Free-fall model: time-step convergence" caption="Error in final angular speed against the exact energy-balance value. Both users stay below 0.0003%." />
 
 ## Conclusion
 
-On paper, yes: the cable drive can lift a large adult's forearm with 0.5 kg in the hand at a predicted 1.26× margin to its 8 N·m rating, with the actuator at 912 N of its 1,500 N. A full lift takes a predicted 3.6 s, and a day of use fits in the battery with room to spare. The drive-failure case is the more serious result: an unbraked forearm would drop in about 0.3 s, so a self-locking actuator, hard end stops and an independent watchdog are design requirements, not extras.
+On paper, yes: the cable drive can lift a large adult's forearm with 0.5 kg in the hand at a predicted 1.26× margin to its 8 N·m rating, or about 1.25× with the brace mass taken from CAD. The actuator works at 912 N of its 1,500 N. A full lift takes a predicted 3.6 s, and a day of use fits in the battery with room to spare. The drive-failure case is the more serious result: an unbraked forearm would drop in about 0.3 s, so the self-locking actuator, hard end stops and an independent watchdog are design requirements, not extras. Revision B now fits together in CAD with no interferences.
 
 **Limitations:**
 
-- **Nothing is measured yet.** All torques, forces, speeds and energies come from a simplified model.
+- **Nothing is measured on hardware yet.** All torques, forces, speeds and energies come from a simplified model; geometry and masses come from CAD.
 - **Assumed values:** Bowden efficiency (0.78), pulley block efficiency (0.9), actuator power draw (24 W lifting, 8 W lowering) and the daily use pattern.
 - **Simplified body model:** one rigid segment from population-average ratios, with no joint stiffness or spasticity. The cuff pressure assumes even contact.
 - **The free-fall case** ignores the actuator and friction; it is a worst-case bound.
-- **Tap detection and firmware are planned, not written.**
+- **Tap detection is not tested.** The thresholds in the simulation are placeholders, and there is no measured false-trigger rate.
+- **No full-system weight or priced bill of materials yet.** Parts without a material in CAD (electronics, actuator, foam, webbing) carry a placeholder density, and the printed parts haven't been sliced or test-printed.
 
-**Next steps (planned):** update the CAD for the printed and Dyneema design; static FEA of the printed pulley, cuffs and brackets at 160 to 205 N cable load; model cable friction and stretch; check the actuator's stall current; buy, print, wire and assemble; write the firmware (BLE, the arming state machine, the position loop and the watchdog); record labelled tap, chewing and talking data to tune the detector; bench tests on a dummy arm, then trials with able-bodied volunteers.
+**Next steps (planned):** test-print the cuffs, hinge bars and pulley and check the fit; static FEA of the printed pulley, cuffs and brackets at 160 to 205 N cable load; write the firmware (BLE, the arming logic, the position loop and the watchdog); record tapping, chewing and talking to measure false triggers; bench-test the drive for tension, efficiency and actuator stall current; build a priced bill of materials and weigh the full system.
 
 ## Issues I ran into
 
 - **The failure case was worse than the normal case.** The model showed that if the drive fails, the forearm falls from 90° in about 0.3 s, reaching 2.3 m/s at the wrist. I made a self-locking actuator and hard end stops design requirements, and gave the watchdog its own relay so it cuts power independently of the controller.
 - **An "average" user hid the real margin.** The median user has a comfortable 1.60× margin, but the large adult drops it to 1.26×. I ran every load case for both users and sized the drive to the large adult.
 - **Two lift-speed figures disagreed.** My sizing model gave an elbow speed of 0.50 rad/s (29 °/s) and a 4.0 s full lift in one place, but working through the actual drive (7 mm/s rod speed, ×4 through the pulley block, on the 50 mm pulley) gave 32 °/s and 3.6 s. I report the drive-based figures, since they follow from the actuator and pulley I chose.
+- **The first concept needed a revision.** Revision A used a steel bike-brake cable, a back plate and a mushroom emergency-stop button. Revision B moves to PETG printed parts, Dyneema line in a Bowden housing, a hip pack and an inline power switch.
+- **26 interferences in the first check.** Axle holes, the clevis, wiring leads, housing runs, a sensor bracket and standoffs overlapped. I fixed each one until the check came back clean.
+- **SolidWorks crashed and hung.** It crashed once during a feature cut and hung several times on large rebuilds of the assembly. I split the work into separate stages (assembly, rendering, checks) so each could be redone on its own.
+- **Fillets and a misplaced part.** Some fillets would not build at first; selecting the edges directly fixed them. One forearm bar first came out 52 mm out of place because the wrong body was picked up after a feature; I corrected it and checked the placement of each new body.
 - **False triggers are the real control risk.** Chewing and talking also move the jaw, so I added an arming pattern (three taps in a window) and a timeout. The detector's false-trigger rate still has to be measured on real data.
-- **The first concept needs a revision.** The current CAD uses a steel bike-brake cable and a mushroom emergency-stop button. I've planned (but not yet modeled) a revision with PETG printed parts, Dyneema line in printed guide channels and an inline power switch. I haven't yet checked its cost against a priced bill of materials.
