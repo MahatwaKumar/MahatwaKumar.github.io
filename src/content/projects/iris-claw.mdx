@@ -76,6 +76,7 @@ I started from one shared table of dimensions (servo bodies, link lengths, finge
   - **Collision sweep:** I moved the parts along a full motion tour and checked every pair of parts for overlap.
   - **Cheaper-servo study:** 2,135 tests for a budget servo set (DS3218, MG996R and MG90S; stall torques 1.77, 0.95 and 0.18 N·m). These were servo step tests, a 1,567-pose static sweep, a search for the lowest-strain posture for 48 hand targets, 12 motion profiles on 5 moves, lighter-part scaling and robustness variants.
 - **In PrusaSlicer** I prepared the parts for printing and printed a fit-test coupon on the target printer to set the hole sizes for pins and filament.
+- **For programming the arm** I made a block-programming app with a 3D view of the arm, so a task can be planned and checked on the model before the real arm exists. Blocks such as "go to pose", "hand to x, y, z" and "gripper open/close" snap together into a program. A built-in planner can also turn a request in plain English into a block program, check it against the arm's joint limits and explain each step. For now the app is only a simulator; it isn't connected to the real arm.
 
 ### Design choices
 
@@ -101,6 +102,16 @@ I started from one shared table of dimensions (servo bodies, link lengths, finge
   height={696}
   duration="2:17"
   caption="Isaac Sim: the arm runs a 13-move tour under gravity, with each drive capped at its servo's stall torque (original servo set). The moves are claw open and close, grip, lift, base sweeps of ±80°, wrist roll and a full horizontal reach. Simulated."
+/>
+
+<Video
+  src="/videos/iris-claw/block-app-demo.mp4"
+  poster="/videos/iris-claw/block-app-demo-poster.webp"
+  title="Block-programming app for the Iris Claw arm"
+  width={1440}
+  height={900}
+  duration="0:47"
+  caption="The block-programming app. A “go to pose: reach” block is dragged in and run. Then the request “Pick up the red cup in front of the arm and place it 90 degrees to the side” becomes a 10-step block program, which is checked, inserted and run on the 3D model with the cup carried. About 17 s of waiting for the planner's reply is cut. The cup attaches on grip and settles on release; it isn't physically simulated."
 />
 
 <ProjectModel id="iris-claw" caption="The full assembly in its idle pose: all 47 components (29 different parts), each placed from the kinematic model, as in the SolidWorks assembly. Drag to rotate." />
@@ -236,6 +247,7 @@ To raise the shoulder margin I've also proposed a spring counterbalance at the s
 - **Self-collision was off in the physics runs.** Collisions were checked separately with the mesh sweep.
 - **Older servo set in the tour video.** The pose tour uses the original servos; the cheaper-servo results and the version 5 printable parts came later.
 - **Assumed mass factor.** Real slicer weights may differ from the 50% fill assumption.
+- **The block app is a simulator only.** Objects in it attach on grip and settle on release, with no physics, and it isn't connected to the real arm yet.
 
 **Next steps:** finish printing and assembly; wiring and servo calibration; measure joint accuracy and compare with the simulation; webcam hand-tracking teleoperation; reinforcement and imitation learning of tasks.
 
