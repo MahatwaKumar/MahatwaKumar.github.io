@@ -1,0 +1,158 @@
+---
+title: 'Optimal F1 Car for the 2027 Rules'
+shortTitle: 'F1 2027 Optimal Car'
+slug: 'f1-2027-rules-optimal-car'
+date: 2026-11-24
+status: 'complete'
+summary: 'I used a lap-time simulation, fitted to real 2026 qualifying telemetry, to find the best car for the 2027 F1 rules. My first model looked right but valued downforce about twice too highly. After I found and corrected that, my 2026 car sits 0.41% from the real poles, and 10 downforce points are worth 0.32 s per lap against a published ~0.30 s. The study chose three rear-wing packages that hold under every proposed 2027 downforce cut.'
+cardSummary: 'Lap-time study of the best 2027 F1 car: three wing packages, and a hidden downforce error found and fixed.'
+heroImage: '../../assets/projects/f1-2027-rules-optimal-car/model-vs-real-poles.png'
+heroAlt: 'Bar chart of how far my model 2026 car is from the real 2026 poles, split by energy strategy, bodywork and downforce level, for the first and corrected model versions. The first version is 2.74% too fast in total, mostly from downforce; the corrected one is 0.41% too fast.'
+keyResults:
+  - { value: '0.41', unit: '%', label: 'My 2026 car vs real 2026 poles (was 2.74%)', qualifier: 'simulated vs measured' }
+  - { value: '0.32', unit: 's', label: 'Lap time per 10 downforce points (published ~0.30 s)', qualifier: 'simulated' }
+  - { value: '0.83 / 0.92 / 1.02', unit: '', label: 'Optimal 2027 rear-wing packages (downforce level)', qualifier: 'simulated' }
+  - { value: '0.89', unit: '', label: 'Rank correlation, team cars vs real 2026 race pace', qualifier: 'simulated vs measured' }
+tags: ['data-analysis', 'cad']
+software: ['OpenF1 telemetry and weather data', 'Lap-time simulation', 'Optimisation', 'CAD']
+featured: false
+order: 5
+downloads: []
+---
+import Figure from '../../components/Figure.astro';
+import Chart from '../../components/Chart.astro';
+import ProcessDiagram from '../../components/ProcessDiagram.astro';
+import SoftwareChips from '../../components/SoftwareChips.astro';
+
+## Problem statement
+
+The 2026 F1 rules brought active aerodynamics and a new energy limit, and the 2027 rules change the wings again. Before a team builds a 2027 car, it has to choose how much downforce to run at each circuit and how to use its energy over a lap. Those choices interact: more wing makes corners faster but straights slower, and it changes where the car can afford to deploy and save energy.
+
+The question I set out to answer: what is the best car for the 2027 rules, and can I trust a lap-time model enough to say so?
+
+<div class="note">
+
+Everything here is simulated, except where I mark it as measured (real 2026 timing, telemetry and session weather from OpenF1) or published (cited by source). This project is not affiliated with Formula 1 or the FIA.
+
+</div>
+
+## Approach
+
+<ProcessDiagram
+  steps={[
+    { title: 'Real 2026 data', detail: 'Qualifying telemetry, lap times and session weather' },
+    { title: 'Lap-time model', detail: 'Fitted to every 2026 pole; air density and tyre load included' },
+    { title: 'Trust tests', detail: 'Real teams’ wing choices, published benchmarks, real race pace' },
+    { title: 'Energy optimiser', detail: 'Shortest energy-neutral super-clip on each lap' },
+    { title: '2027 car', detail: 'Wing packages and per-circuit trim inside the 2027 rules' },
+  ]}
+/>
+
+- **I fitted a lap-time model to real 2026 qualifying.** For each circuit I used the measured telemetry, lap times and session weather, so the model reproduces each real pole lap.
+- **I tested whether the model values downforce correctly,** not only whether it matches lap times. Real teams choose their wing level to be close to the fastest option, so a good model should put its own optimum close to their choice. I call the difference "regret". I also compared the model with published sensitivities (lap time per downforce point and per kilogram) and with real 2026 race pace.
+- **I replaced a fixed menu of energy strategies with an optimiser.** On each lap it finds the shortest super-clip (the stretch where the car runs out of deployable energy before braking) that still leaves the lap energy-neutral.
+- **I designed the 2027 car inside the rules.** I chose a small set of rear-wing packages with trim for each circuit, all inside the deepest legal 2027 rear wing. I then checked the choice against every proposed 2027 downforce cut.
+- **I checked the geometry.** All 58 CAD models (the base car, the team versions and the driver versions) pass every 2027 rear-wing and front-wing geometry rule I checked.
+
+### Tools I used
+
+<SoftwareChips items={['OpenF1 telemetry, lap times and weather', 'Lap-time simulation', 'Energy-strategy optimisation', 'CAD', 'FIA 2026 and 2027 Technical Regulations']} />
+
+**Skills:** vehicle performance modelling, parameter fitting, testing a model against real decisions, optimisation, reading and applying technical regulations, benchmarking against published data.
+
+## Analysis
+
+### The first model valued downforce too highly
+
+My first model matched every real 2026 pole lap within 0.015%, yet its own best 2026 car beat the real poles by 2.74%. Of that, 2.19% came from choosing more wing than any real team ran. Teams are not leaving that much time on the table, so the model was wrong.
+
+<Figure src="f1-2027-rules-optimal-car/model-vs-real-poles.png" alt="Grouped bar chart of the model 2026 car's gap to the real 2026 poles, split into energy strategy, bodywork, downforce level and total. The first version (V1.1) is 2.74% faster in total, 2.19% of it from downforce. The corrected version (V1.2) is 0.41% faster, with almost nothing from downforce." caption="My model 2026 car against the real 2026 poles (simulated vs measured). V1.1 is the first model; V1.2 is the corrected one. The downforce share fell from 2.19% to 0.06%." />
+
+I corrected it in three steps and measured each one:
+
+<div class="table-wrap">
+
+| Step | Regret vs real teams' wing choice | Lap time per 10 downforce points |
+|---|---|---|
+| First model | 2.34% | 0.64 s |
+| Consistent refit | 0.20% | 0.50 s |
+| + measured air density at each session | 0.13% | 0.45 s |
+| + tyre load sensitivity (published tyre models) | 0.07% | 0.32 s |
+| Published value | | ~0.30 s |
+
+</div>
+
+Air density mattered more than I expected. The measured air at Mexico City qualifying was 0.74 of sea-level density, and the first model had used sea-level air everywhere.
+
+### How I checked it
+
+- **Against real teams' decisions:** regret fell from 2.34% to 0.07% (simulated).
+- **Against real poles:** my 2026 car is now 0.41% faster than the real poles, and only 0.06% of that comes from the downforce choice (simulated vs measured).
+- **Against published benchmarks:**
+
+<div class="table-wrap">
+
+| Benchmark | Model (simulated) | Published |
+|---|---|---|
+| Lap time per 10 downforce points | 0.32 s | ~0.30 s (Symonds, Autosport, 2025) |
+| Lap time per kg | 0.023 s | 0.030–0.037 s (Limebeer et al. 2014; Casanova et al. 2001) |
+| Super-clip time per 2026 qualifying lap, before Miami | 8.6 s | ~8 s (The Race, April 2026) |
+| Super-clip time, after Miami | 5.4 s | 3–4 s (The Race, April 2026) |
+
+</div>
+
+The downforce sensitivity and the early-season super-clip time agree. The mass sensitivity is about 30% low, and the post-Miami super-clip time is too high.
+
+- **Against real race pace:** I built a car for each team from its fitted 2026 hardware. Their order matches the real 2026 season race pace with a rank correlation of 0.89. After scaling, the remaining error is 0.44%. Ferrari is the largest miss: the model puts it 1.22% off the pace, against 0.29% measured.
+
+<Chart id="r27-teams" title="Team cars vs real 2026 race pace" caption="Model gaps are scaled by 0.70 so both use the same spread. The order matches with a rank correlation of 0.89; Ferrari is the largest miss." />
+
+### Energy strategy
+
+A fixed menu of 32 energy strategies made lap time jump by up to 1.2 s between nearly identical cars, which hid the real effect of the wing. The optimiser cut the noise between neighbouring wing levels from 0.159 s to 0.036 s and gave faster laps at every circuit, by 0.36 s per lap on average (simulated).
+
+<Figure src="f1-2027-rules-optimal-car/energy-strategy-optimiser-spa.png" alt="Line chart of simulated race-lap time at Spa against downforce level. The 32-option strategy grid (V1.1) is jagged, with a jump of about a second near level 0.95. The optimiser (V1.2) gives a smooth curve that is faster at every level, with its best lap near level 0.87." caption="Spa race lap against wing level (simulated). The fixed strategy menu (V1.1) is jagged; the optimiser (V1.2) is smooth and faster everywhere." />
+
+### The optimal 2027 car
+
+The best 2027 car uses three rear-wing packages at downforce levels 0.83, 0.92 and 1.02, with trim at each circuit. Every setting sits inside the deepest legal 2027 rear wing. The choice moves lap time by less than 0.02% under every proposed 2027 downforce cut (20, 30 or 50 points), so it does not depend on which cut the FIA adopts.
+
+<Chart id="r27-wing" title="Wing setting at each circuit for the 2027 car (simulated optimum)" caption="Low package from Melbourne to Las Vegas, mid package from Montreal to Mexico City, high package from Madring to Monte Carlo. The table adds the energy settings and the simulated race lap." />
+
+Tuning the balance to each driver's style is worth up to 0.20 s per lap (Verstappen, who prefers a pointy car). Drivers with no published evidence of their style keep the team car.
+
+## Conclusion
+
+A lap-time model can match every real lap and still give the wrong answer to a design question. My first model did exactly that. Testing it against the wing levels real teams chose exposed the error. After the correction, the model agrees with published downforce sensitivity and ranks the teams' race pace well. From it, I chose three 2027 rear-wing packages that hold up under every proposed downforce cut.
+
+### Limitations
+
+- The results are simulated. Only the 2026 lap times, telemetry and weather are measured.
+- Mass sensitivity is about 30% lower than published values, and the post-Miami super-clip time is too high.
+- The team cars miss Ferrari's race pace by about 0.9 percentage points.
+- The 2027 rules are at their first issue, and the downforce cut is still only a proposal.
+- The study does not model following cars or dirty air.
+- Interlagos 2026 qualifying was wet, so its reference lap is an estimate.
+
+### Next steps
+
+- Correct the mass sensitivity and the post-Miami energy behaviour.
+- Re-run the study when the 2027 rules and the downforce cut are final.
+- Add the time a car loses in dirty air, using my [dirty-air lap-time model](/projects/f1-dirty-air-lap-time-model/).
+
+## Issues I ran into
+
+- **The model looked right but was wrong.** It matched every real lap within 0.015% but valued downforce twice too highly. I had fitted the downforce levels with one drag model and then used them with another. The test against real teams' wing choices exposed it. I refitted consistently and added the two missing effects, air density and tyre load sensitivity.
+- **A wet reference lap.** Interlagos 2026 qualifying was wet. I estimated a dry lap (71.63 s ± 0.77 s) from the 2025 dry laps and the 2025-to-2026 change at 16 dry circuits.
+- **A noisy strategy menu.** The fixed menu of 32 energy strategies made lap time jump by up to 1.2 s between nearly identical cars. I replaced it with an optimiser.
+- **An impossible gain.** A driver with no style evidence showed a 3.46 s gain, which could not be real. The optimiser could pick a needlessly long super-clip. I fixed it and re-ran every result.
+- **A stale number.** When I checked every quoted number against its run, one came from an older run (0.355 s instead of 0.362 s). I corrected it, and all 59 numbers now match.
+- **No change without evidence.** A re-optimised set of wing packages did not beat the existing set on held-out circuits, so I kept the existing set.
+
+## Regulations and sources
+
+- FIA Formula 1 Technical Regulations 2026 (active aerodynamics, power unit, energy limits).
+- FIA 2027 Technical Regulations, first issue, ratified by the World Motor Sport Council (2026).
+- FIA statement on the 2027 and 2028 regulation changes (June 2026).
+- OpenF1: 2025 and 2026 qualifying telemetry, lap times and session weather (measured).
+- Symonds, Autosport (2025); Limebeer, Perantoni and Rao (2014); Casanova, Sharp and Symonds (2001); The Race (April and June 2026).

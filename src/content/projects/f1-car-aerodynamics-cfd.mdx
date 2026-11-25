@@ -167,6 +167,8 @@ The car was front-heavy because its placeholder floor was too weak, not because 
 - A short unsteady (URANS) check.
 - A speed sweep at 50, 70 and 90 m/s.
 
+A separate study, [Optimal F1 Car for the 2027 Rules](/projects/f1-2027-rules-optimal-car/), looks at how much downforce to run at each circuit. It takes its downforce levels from real telemetry, not from this CFD.
+
 ## Issues I ran into
 
 - **Thin trailing edges broke the surface mesh.** The first wing trailing edges were 1.4 to 4.7 mm thick, and Fluent Meshing's surface mesher failed on them with a "front could not be closed" error. I blunted every trailing edge to 10 mm (6 mm still could not be meshed at an 8 mm minimum size) and added curvature refinement down to 3 mm on the wings only. That made the wings meshable, but it changes their load, and I list it as a limitation.

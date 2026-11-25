@@ -132,6 +132,8 @@ Simple physics with six global numbers describes the **average** time a followin
 
 **Next steps (planned):** a one-shot test of the frozen model on 2026 races with the pass bar set first, and an interactive strategy dashboard.
 
+A separate study, [Optimal F1 Car for the 2027 Rules](/projects/f1-2027-rules-optimal-car/), uses a lap-time model of a car on a clear track to choose the best 2027 wing settings. It does not model following cars.
+
 ## Issues I ran into
 
 - **The stall-gap forecast failed.** The model matches the measured loss curve closely but lost the forecast test to the FIA curve at every horizon. Fitting the average loss and predicting when a gap stops shrinking turned out to be different problems. I reported the failure as it stands and ran a follow-up investigation rather than changing the model after the fact.

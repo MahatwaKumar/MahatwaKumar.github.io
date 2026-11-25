@@ -16,6 +16,8 @@ import ltBase from '../data/f1-dirty-air-lap-time-model/model_baselines_earlier_
 import icTorque from '../data/iris-claw/joint_torques.csv?raw';
 import icMass from '../data/iris-claw/mass_summary.csv?raw';
 import exTorque from '../data/gesture-exosuit/elbow_torque_vs_angle.csv?raw';
+import r27Set from '../data/f1-2027-rules-optimal-car/optimal-2027-car-settings_simulated.csv?raw';
+import r27Team from '../data/f1-2027-rules-optimal-car/team-gaps_simulated-vs-measured.csv?raw';
 import exFree from '../data/gesture-exosuit/verification_freefall_convergence.csv?raw';
 
 export type Point = { x: number; y: number };
@@ -94,7 +96,27 @@ const mass = parseCsv(icMass).filter((r) => !/^(ALL|COMPONENT)/.test(r.group));
 const ext = parseCsv(exTorque);
 const exf = parseCsv(exFree);
 
+/* ------------------------- F1 2027 rules: optimal car ------------------------- */
+const r27s = parseCsv(r27Set).reverse();
+const r27t = parseCsv(r27Team);
+
 export const charts: Record<string, ChartSpec> = {
+  'r27-wing': {
+    kind: 'bar', horizontal: true, labels: r27s.map((r) => r.circuit), xLabel: 'Downforce level run (package + trim, simulated)', yLabel: '', unit: '', decimals: 2, height: 520, xMin: 0.7,
+    refLine: { value: 1.05, label: 'deepest legal 2027 rear wing', axis: 'x' },
+    datasets: [{ label: 'Downforce level (simulated optimum)', color: 'c1', data: r27s.map((r) => num(r.downforce_level_run)) }],
+    table: { head: ['Circuit', 'Package', 'Downforce level', 'Deploy below (km/h)', 'Super-clip before braking (m)', 'Race lap (s, simulated)'], rows: r27s.slice().reverse().map((r) => [r.circuit, r.package, r.downforce_level_run, r.deploy_below_kmh, r.superclip_before_braking_m, r.race_lap_s_simulated]) },
+    source: 'optimal-2027-car-settings_simulated.csv',
+  },
+  'r27-teams': {
+    kind: 'bar', horizontal: true, labels: r27t.map((r) => r.team), xLabel: 'Gap to the fastest car (%)', yLabel: '', unit: '%', decimals: 2, height: 460, xMin: 0,
+    datasets: [
+      { label: 'Real 2026 race pace (measured)', color: 'c2', data: r27t.map((r) => num(r.real_2026_season_race_pace_gap_pct_measured)) },
+      { label: 'Model team car, scaled ×0.70 (simulated)', color: 'c1', data: r27t.map((r) => num(r.model_gap_scaled_pct_simulated)) },
+    ],
+    table: { head: ['Team', 'Model gap (%, simulated)', 'Model gap scaled (%, simulated)', 'Real race-pace gap (%, measured)'], rows: r27t.map((r) => [r.team, r.model_gap_pct_simulated, r.model_gap_scaled_pct_simulated, r.real_2026_season_race_pace_gap_pct_measured]) },
+    source: 'team-gaps_simulated-vs-measured.csv',
+  },
   'f1-forces': {
     kind: 'bar', labels: ['Drag', 'Downforce'], xLabel: '', yLabel: 'Force, full car at 50 m/s (N)', unit: 'N', decimals: 0,
     datasets: [

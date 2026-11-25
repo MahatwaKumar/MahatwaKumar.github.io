@@ -1,0 +1,22 @@
+circuit,package,downforce_level_run,deploy_below_kmh,superclip_before_braking_m,race_lap_s_simulated
+Melbourne,low,0.82,305,103,79.072
+Miami,low,0.86,all,124,88.482
+Silverstone,low,0.86,302,156,87.898
+Spa-Francorchamps,low,0.86,291,68,105.404
+Monza,low,0.86,all,111,82.458
+Baku,low,0.86,268,11,102.704
+Las Vegas,low,0.86,340,199,94.387
+Montreal,mid,0.89,322,142,73.246
+Shanghai,mid,0.9,290,71,93.125
+Interlagos,mid,0.9,314,64,72.215
+Suzuka,mid,0.92,290,131,90.094
+Spielberg,mid,0.92,292,107,66.859
+Catalunya,mid,0.94,all,171,75.925
+Zandvoort,mid,0.95,309,114,72.048
+Austin,mid,0.95,268,54,95.037
+Mexico City,mid,0.95,all,68,77.255
+Madring,high,1.0,253,82,92.55
+Kuala Lumpur,high,1.0,267,99,95.915
+Singapore,high,1.0,260,43,92.094
+Hungaroring,high,1.04,266,58,77.734
+Monte Carlo,high,1.05,252,64,72.637

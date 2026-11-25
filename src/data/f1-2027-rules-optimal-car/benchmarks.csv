@@ -1,0 +1,6 @@
+benchmark,model_simulated,published,source
+Lap time per 10 downforce points,0.32 s,~0.30 s,"Symonds, Autosport, 2025"
+Lap time per kg,0.023 s,0.030-0.037 s,Limebeer et al. 2014; Casanova et al. 2001
+"Super-clip time per 2026 qualifying lap, pre-Miami",8.6 s,~8 s,"The Race, Apr 2026"
+"Super-clip time, post-Miami",5.4 s,3-4 s,"The Race, Apr 2026"
+2026 car (own design method) vs real 2026 poles,-0.41%,0 (measured),FIA timing / OpenF1
