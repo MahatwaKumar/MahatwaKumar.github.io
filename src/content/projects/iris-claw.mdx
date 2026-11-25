@@ -4,17 +4,17 @@ shortTitle: 'Iris Claw: 6-DOF Robotic Arm'
 slug: 'iris-claw'
 date: 2026-01-01
 status: 'in-progress'
-summary: 'I designed a low-cost 6-DOF robotic arm with a four-finger, tendon-driven claw in SolidWorks, and sized its 11 hobby servos with a static torque analysis. I then simulated it in NVIDIA Isaac Sim with servo-like drives, under gravity, in 2,135 tests. Those tests mapped which poses a cheaper servo set can hold and which motion profiles are safe. The shoulder is the critical joint in every analysis. The first parts are printing; apart from a printed fit-test coupon, nothing has been measured yet.'
-cardSummary: '29-part SolidWorks design with a tendon-driven claw, simulated in Isaac Sim: 11 servos sized and a safe operating map built from 2,135 tests.'
+summary: 'I designed a low-cost 6-DOF robotic arm with a four-finger, tendon-driven claw in SolidWorks, and sized its 11 hobby servos with a static torque analysis. I then simulated it in NVIDIA Isaac Sim with servo-like drives, under gravity, in 2,135 tests. Those tests mapped which poses a cheaper servo set can hold and which motion profiles are safe. The shoulder is the critical joint in every analysis, and a simulated spring counterbalance removes every pose it could not hold. In simulation the arm also picks objects it finds with a palm camera (58 of 60). The parts are printed and assembly has started; nothing has been measured on the arm yet.'
+cardSummary: '29-part SolidWorks design with a tendon-driven claw, simulated in Isaac Sim (safe operating map, grasping, camera-guided picking); printed and being assembled.'
 heroImage: '../../assets/projects/iris-claw/power-grip-pose.png'
 heroAlt: 'SolidWorks render of the Iris Claw arm in its power-grip pose: grey printed links, orange servo housings and a teal base ring.'
 keyResults:
   - { value: '577.5', unit: 'mm', label: 'Reach, shoulder axis to claw tips', qualifier: 'from CAD' }
   - { value: '1.24', unit: 'SF', label: 'Shoulder safety factor, worst case (critical joint)', qualifier: 'predicted' }
-  - { value: '0.81', unit: '°', label: 'Worst joint error holding 5 reference poses in Isaac Sim', qualifier: 'simulated' }
-  - { value: '11', unit: 'servos', label: '6 arm joints + 4 finger drives + swivel', qualifier: 'design' }
+  - { value: '58/60', unit: 'picks', label: 'Camera-guided pick and carry in Isaac Sim (96.7%)', qualifier: 'simulated' }
+  - { value: '11', unit: 'servos', label: '6 arm joints + 4 finger drives + swivel; first build runs 10', qualifier: 'design' }
 tags: ['cad', 'robotics']
-software: ['SolidWorks', 'NVIDIA Isaac Sim', 'PrusaSlicer']
+software: ['SolidWorks', 'NVIDIA Isaac Sim', 'PrusaSlicer', 'Bambu Studio', 'ESP32']
 featured: false
 order: 6
 model3d:
@@ -48,7 +48,7 @@ The question for this phase: can every joint hold its worst-case static load wit
 
 <div class="note">
 
-The CAD and the simulations are complete and the first parts are printing. Every number on this page is **predicted** from the CAD model and a static calculation, or **simulated** in Isaac Sim. The only measurement so far is a printed fit-test coupon.
+The parts are printed (with seven reprinted after a fit check against the real servos) and assembly has started. Every number on this page is **predicted** from the CAD model and a static calculation, or **simulated** in Isaac Sim. The only measurement so far is a printed fit-test coupon; every image is a render, plot or screenshot, not a photo.
 
 </div>
 
@@ -62,7 +62,8 @@ The CAD and the simulations are complete and the first parts are printing. Every
     { title: 'Posed assemblies + drawing', detail: 'Three poses, A3 general arrangement with BOM', tool: 'SolidWorks' },
     { title: 'Mass + torque', detail: 'Mass properties of each part; worst-case static torque per joint', tool: 'SolidWorks' },
     { title: 'Physics simulation', detail: 'Servo-like drives under gravity: poses, safe zones, motion profiles, robustness', tool: 'Isaac Sim' },
-    { title: 'Print + assemble', detail: 'Fit-test coupon done; printing, wiring and servo calibration', planned: true },
+    { title: 'Print + assemble', detail: 'Parts printed, 7 reprinted (v8), ESP32 set up, servos being centred', tool: 'PrusaSlicer, Bambu Studio' },
+    { title: 'First powered moves', detail: 'Slow mode from the block app, then accuracy against the simulation', planned: true },
   ]}
 />
 
@@ -76,14 +77,15 @@ I started from one shared table of dimensions (servo bodies, link lengths, finge
   - **Collision sweep:** I moved the parts along a full motion tour and checked every pair of parts for overlap.
   - **Cheaper-servo study:** 2,135 tests for a budget servo set (DS3218, MG996R and MG90S; stall torques 1.77, 0.95 and 0.18 N·m). These were servo step tests, a 1,567-pose static sweep, a search for the lowest-strain posture for 48 hand targets, 12 motion profiles on 5 moves, lighter-part scaling and robustness variants.
 - **In PrusaSlicer** I prepared the parts for printing and printed a fit-test coupon on the target printer to set the hole sizes for pins and filament.
-- **For programming the arm** I made a block-programming app with a 3D view of the arm, so a task can be planned and checked on the model before the real arm exists. Blocks such as "go to pose", "hand to x, y, z" and "gripper open/close" snap together into a program. A built-in planner can also turn a request in plain English into a block program, check it against the arm's joint limits and explain each step. For now the app is only a simulator; it isn't connected to the real arm.
+- **For programming the arm** I made a block-programming app with a 3D view of the arm, so a task can be planned and checked on the model before the real arm exists. Blocks such as "go to pose", "hand to x, y, z" and "gripper open/close" snap together into a program. A built-in planner can also turn a request in plain English into a block program, check it against the arm's joint limits and explain each step. It now also has a Robot setup page that links to the arm's ESP32 controller for centring, jogging and calibrating each joint, but it hasn't driven the assembled arm yet.
 
 ### Design choices
 
 - **Arm:** 6 revolute joints in an articulated layout (J1 base yaw, J2 shoulder pitch, J3 elbow pitch, J4 forearm roll, J5 wrist pitch, J6 hand roll), giving full position and orientation of the hand.
 - **Joints:** each pitch servo sits in a window in one link's cheek plate and drives the next link through a recessed horn. An M4 idler pin carries the opposite side, so bending loads go into the pin, not the servo output shaft.
 - **Hand:** 4 fingers × 3 segments. Each finger is driven by one MG90S micro servo pulling an antagonistic tendon pair (flex and extend). Fingers 2 and 4 sit on a servo-driven swivel ring (up to 55°), so the claw can switch between wrap, pinch and gesture grips. A camera mount sits in the centre of the palm.
-- **Actuators:** DS3218 (J1, J3), DS3235 (J2), MG996R (J4, J5) and MG90S (J6, 4 finger drives, swivel): 11 servos on a PCA9685 PWM driver and a 6 V supply.
+- **Actuators (design phase):** DS3218 (J1, J3), DS3235 (J2), MG996R (J4, J5) and MG90S (J6, 4 finger drives, swivel): 11 servos. This set was used for the torque analysis below.
+- **Actuators (first build):** the cheaper set from the Isaac Sim study: DS3218 on the shoulder (J2), MG996R on J1, J3, J4 and J5, and MG90S on J6 and the 4 finger drives. The first build runs these 10 servos straight from an ESP32 controller, with a separate 5 V servo supply and a shared ground; the finger swivel follows later.
 - **Materials:** PLA structure, PETG accent rings, TPU fingertip pads, steel pins and a lazy-susan bearing at the base.
 
 <Gallery cols={3}>
@@ -118,7 +120,7 @@ I started from one shared table of dimensions (servo bodies, link lengths, finge
 
 ### Tools I used
 
-<SoftwareChips items={['SOLIDWORKS 2026 (parts, assemblies, drawings, BOM, mass properties)', 'NVIDIA Isaac Sim 5.1 (PhysX articulation)', 'URDF', 'PrusaSlicer', 'Design for 3D printing', 'STEP / STL export']} />
+<SoftwareChips items={['SOLIDWORKS 2026 (parts, assemblies, drawings, BOM, mass properties)', 'NVIDIA Isaac Sim 5.1 (PhysX articulation, RGB-D camera)', 'URDF', 'PrusaSlicer', 'Bambu Studio', 'ESP32', 'Design for 3D printing', 'STEP / STL export']} />
 
 **Skills:** robot kinematics (homogeneous transforms), mechanism and joint design, tendon-driven finger design, servo selection and modelling, static torque and mass analysis, safety factors, physics simulation, motion profiling, engineering drawing, print tolerancing.
 
@@ -220,6 +222,74 @@ Fully stretched out, the shoulder needs 103% of its stall torque and the elbow 8
 
 <Figure src="iris-claw/fit-test-coupon.png" alt="Render of the orange fit-test coupon: a bar with a row of holes of increasing size and a small test pin." caption="The fit-test coupon: one row of hole sizes for pin and filament fits, about 106 × 29 × 10 mm and 30 min to print." size="half" />
 
+**Shoulder spring counterbalance (simulated, cheaper servo set).** I added a spring at the shoulder to the Isaac Sim model and reran the 1,567-pose sweep and the robustness tests. The spring has not been built yet.
+
+<div class="table-wrap">
+
+| | Without spring | With spring |
+|---|---|---|
+| Safe poses (up to 40% of stall), of 1,567 | 266 | **536** |
+| Poses it can't hold | 39 | **0** |
+| Shoulder worst load | 103% of stall | **64%** |
+| Elbow worst load | 83% | 83% |
+| Poses held within 2°, of 60 (nominal / 20% weaker servos / 20% heavier parts / both) | 31 / 17 / 18 / 11 | 44 / 30 / 32 / 18 |
+
+</div>
+
+<Figure src="iris-claw/safe-zone-map-with-spring.png" alt="Five heat maps of shoulder angle against elbow angle with the shoulder spring fitted: much wider green bands and no red cells." caption="Safe-zone map with the shoulder spring: the green band about doubles and no pose is left that the arm can't hold. Simulated, no payload." />
+
+The spring doubles the safe zone. With the shoulder relieved, the elbow becomes the limiting joint, which supports the planned elbow servo upgrade. I generated the arm's gentle-mode limits from this study.
+
+**Grasp physics (simulated).** I tested the claw on 14 objects, at 4 masses (20 to 200 g) and 2 friction values, in 112 trials. The claw approaches palm-down, closes at the finger servos' stall torque, lifts and then shakes the base ±30°. A grasp counts as held if the object stays in the hand with less than 20 mm of slip. **51 of 112 held.** 40 mm cylinders held in all 8 cases, and 50 mm boxes, 60 mm balls and a 70 mm cup held in most. Small or flat objects failed: the fingers close past a 30 mm box, a 40 mm ball and a screwdriver lying at 45°.
+
+<Figure src="iris-claw/grasp-matrix.png" alt="Grid of grasp outcomes: objects down the side, mass and friction across the top; green held, orange slipped, red not lifted." caption="Grasp outcome by object, mass and friction: green held after the shake, orange slipped or dropped, red not lifted. Simulated." />
+
+**Camera-guided picking (simulated).** I put an RGB-D camera in the palm and trained an object detector on 5,000 synthetic palm-camera images from Isaac Sim. The arm finds the object, works out its 3D position from depth, takes a second, closer look, then grasps, lifts and carries it. In 60 new random scenes with clutter, random lighting and random colours, **58 picks succeeded (96.7%)**, and all 58 held through a ±25° base shake. The camera's 3D position error was 0.4 mm at the median, under 5.4 mm for 90% of picks, and 18.5 mm at worst.
+
+<Video
+  src="/videos/iris-claw/isaac-sim-see-and-pick.mp4"
+  poster="/videos/iris-claw/isaac-sim-see-and-pick-poster.webp"
+  title="Isaac Sim camera-guided pick and carry"
+  width={1280}
+  height={720}
+  duration="0:35"
+  caption="Isaac Sim: the palm camera finds the object, and the arm picks and carries it. Simulated."
+/>
+
+<div class="table-wrap">
+
+| Object | Trials | Picked and carried |
+|---|---|---|
+| Can | 14 | 14 |
+| Ball, 60 mm | 12 | 12 |
+| Block, 50 mm | 7 | 7 |
+| Cup | 16 | 15 |
+| Screwdriver | 11 | 10 |
+| **Total** | **60** | **58 (96.7%)** |
+
+</div>
+
+### Printing and assembly
+
+The parts are printed and assembly has started. When I test-fitted the real servos into the first prints, the servo seats didn't fit, so over versions 6 to 8 I redesigned and reprinted 7 parts:
+
+- **Cable exit.** I moved each servo's cable exit to the shaft end, where it no longer blocks the servo from seating.
+- **Cable grooves.** I added a cable groove to the vertical pockets, 9 × 4 mm (6 × 3 mm for the micro servo), so a servo drops in with its cable and strain relief attached.
+- **Lip relief.** I added relief under the mounting tabs for the moulded lip of the servo case.
+- **Tab-screw holes.** I made the tab-screw holes wider and longer.
+- **Side windows.** I gave the side-mounted servos 1.0 mm of clearance per side.
+
+Some horn recesses were also too deep for the joint part to reach the servo horn. Instead of reprinting those parts, I designed glue-in spacer shims, 1 to 3 mm thick.
+
+<Gallery>
+  <Figure src="iris-claw/v8-cable-groove.png" alt="Section render of the forearm lower part cut in half, with the new cable groove and side exit highlighted in orange." caption="Version 8 forearm, cut in half: the new cable groove (orange) lets the servo drop in with its cable attached." size="half" />
+  <Figure src="iris-claw/horn-shims.png" alt="Rows of cross-shaped and round spacer shims in 1 to 3 mm thicknesses." caption="Glue-in horn spacer shims for the MG90S (cross) and MG996R (round) horns." size="half" />
+</Gallery>
+
+<Figure src="iris-claw/v8-plates.png" alt="Three print-plate layouts for a Prusa Core One with the version 8 parts, top view and 3D view." caption="Version 8 reprints laid out on three Prusa Core One plates, split by colour. Renders, not photos." />
+
+The ESP32 controller is set up. It plans smooth, synchronised joint moves, applies the gentle-mode limits from the simulation, has a hardware stop button, and stores the calibration for each joint. At power-up it sends no servo signals and attaches the servos one at a time, to keep current peaks down. Each servo is being centred on a bench supply before its horn goes on.
+
 ### How I checked it
 
 - **Assembly placement check.** I compared the bounding box of every component as placed in SolidWorks with the box predicted by my kinematic model. The worst difference on the idle pose was **0.00 mm** over 47 components, which confirms the placement used for every pose and for the torque analysis.
@@ -228,6 +298,8 @@ Fully stretched out, the shoulder needs 103% of its stall torque and the elbow 8
 - **Hand check of the masses.** The servo total (375.4 g) matches the catalogue masses, and the printed mass is the sum of the individual parts.
 - **Simulation model against CAD.** Placing every part with the robot description's joint chain matched the SolidWorks placements within 0.005 mm, so the simulated arm has the same geometry as the CAD.
 - **Static hand calculation against simulation.** Both put the shoulder as the most loaded joint, then the elbow, with the wrist far below.
+- **Camera picking against true positions.** With the true object pose given instead of the camera's estimate, grasping succeeded 19 of 19 times. So almost all of the remaining failures come from finding the object, not from the grasp.
+- **Test-fitting real servos.** I test-fitted real servos into the printed parts, which is how the seat problems were found. This was a fit check by hand, not a measurement.
 - **Not done:** no finite-element analysis, mesh study or physical test of the arm. The hand-calculated torques are static (no acceleration, friction or tendon loads).
 
 ## Conclusion
@@ -236,20 +308,24 @@ The design works on paper: with the servos I chose, every joint can hold the str
 
 The Isaac Sim tests agree and add the operating rules. With the original servos, the arm held all 5 reference poses within 0.81°. With the cheaper set, only 17% of poses are safe for continuous use, the stretched-out pose can't be held at all, and safe operation means keeping the forearm roughly upright, moving through smooth profiles rather than raw steps, and staying inside the gentle-mode limits. Lighter parts help almost one-for-one: 15% less printed mass gives about 10% less joint torque.
 
-To raise the shoulder margin I've also proposed a spring counterbalance at the shoulder and an upgrade of the elbow servo to a DS3235, which shares the same body size. These are on paper only.
+A shoulder spring fixes most of this in simulation: it doubles the safe zone, leaves no pose the arm can't hold and drops the shoulder to 64% of stall. That makes the elbow the next limit, so an elbow servo upgrade is the next change. In simulation the arm also grasps mid-sized objects reliably and picks objects it finds with its palm camera 58 times out of 60; small and flat objects remain its weak spot.
+
+Building it has already taught me something the CAD didn't: the real servos didn't fit until I modeled their cables and case lips, not just the datasheet body.
 
 **Limitations:**
 
-- **Almost no hardware data.** Only the fit-test coupon is measured. Grip force, finger speed, tendon friction, joint accuracy, heating and the gap between simulation and the real arm are unknown.
+- **Almost no hardware data.** Only the fit-test coupon is measured, and there are no photos of the real arm yet. Grip force, finger speed, tendon friction, joint accuracy, heating and the gap between simulation and the real arm are unknown.
 - **Datasheet servos.** Stall torques are datasheet values; real budget servos vary.
 - **Not modelled:** gearbox backlash, servo heating and tendon friction. The fingers are idealised joints that follow the knuckle.
 - **No payload in the sweep.** The safe-zone map is a static hold with an empty claw; any payload moves every zone towards higher load.
 - **Self-collision was off in the physics runs.** Collisions were checked separately with the mesh sweep.
 - **Older servo set in the tour video.** The pose tour uses the original servos; the cheaper-servo results and the version 5 printable parts came later.
 - **Assumed mass factor.** Real slicer weights may differ from the 50% fill assumption.
-- **The block app is a simulator only.** Objects in it attach on grip and settle on release, with no physics, and it isn't connected to the real arm yet.
+- **The block app hasn't driven the real arm yet.** Objects in its 3D view attach on grip and settle on release, with no physics.
+- **Camera picking limits.** Palm-down grasps reach only objects 0.26 to 0.34 m from the base. The training images are synthetic, so the real camera will need real labelled images. The sag correction uses joint angles from the simulation; the real arm will need a calibrated one.
+- **Not built yet:** the shoulder spring, and the finger swivel, which is in the design but not in the first build.
 
-**Next steps:** finish printing and assembly; wiring and servo calibration; measure joint accuracy and compare with the simulation; webcam hand-tracking teleoperation; reinforcement and imitation learning of tasks.
+**Next steps:** finish assembly with the version 8 parts and shims; fit the horns on the centred servos; first powered moves from the block app in slow mode; measure joint accuracy and sag against the simulation; build the shoulder spring; later, webcam hand-tracking teleoperation and learning tasks.
 
 ## Issues I ran into
 
@@ -257,7 +333,16 @@ To raise the shoulder margin I've also proposed a spring counterbalance at the s
 - **No PLA in the SolidWorks material library.** The printed parts carry ABS as their CAD material, so SolidWorks' own mass values don't match a PLA print. I used the PLA density (1.24 g/cm³) and a 50% fill factor in the mass analysis instead.
 - **SolidWorks crashed when I reopened the posed assemblies.** Closing all three and reopening them crashed SolidWorks 2026, so I saved each pose's renders straight from the open assembly instead.
 - **Posed, not mated.** To make the three poses match the kinematic model exactly, I fixed each component in place rather than using mates. The trade-off is that the joints can't be dragged in SolidWorks to try new poses.
-- **Servo bodies are from datasheets.** I modeled them from typical datasheet dimensions. They need checking against the real servos before printing, or the cheek-plate windows may not fit.
+- **The real servos didn't fit the first prints.** I had modeled the servos from datasheet dimensions. In the printed pockets, the cable exit, the moulded case lip and the tab screws all got in the way. I fixed them over versions 6 to 8 and reprinted 7 parts. Lesson: model the cable and the case lip, not just the datasheet body.
+- **Horn recesses were too deep,** so some joint parts didn't reach the servo horn. I used glue-in spacer shims instead of reprinting.
+- **The controller board wouldn't take the arm's setup at first.** It came with factory test firmware. Loading the arm's firmware kept failing until I put the board into download mode by hand and used a slower transfer speed. Opening a connection to the board also rebooted it, which would drop the arm, so I changed the connection settings to stop the reset.
+- **The wrong power source for the servos.** A 9 V battery is above the servos' rating and can't supply stall current, so I centre them from a bench supply's 5 V channel. Its current reading sat near zero, which is correct: the setting is a limit, and an idle servo draws only a few mA.
+- **Camera picking started at 14 of 19.** I fixed it step by step, and it reached 58 of 60:
+  - Arm sag put the virtual camera behind the face of its mount, so I stopped the mount blocking the view.
+  - I started each move from the last commanded angle instead of the measured one, which had been loosening the grip.
+  - I added a gravity-sag correction at the hover pose; the claw had been landing 5 to 20 mm off.
+  - I gripped tall objects lower.
+  - I added a 3D check to tell look-alike objects apart.
 - **Exported meshes came out shifted.** The STL files from SolidWorks landed in positive coordinate space instead of where the parts sit. I moved each mesh back by the difference between its centroid and the part's centre of mass from CAD.
 - **The joints locked up in Isaac Sim.** The friction values in the robot description became joint friction that grows with load, so the loaded joints stuck. I set friction to zero and used damping for the losses instead.
 - **The arm sagged under gravity.** The drives Isaac Sim created on import were far softer than a hobby servo. I switched to force drives with explicit stiffness and damping and a small armature. Before that, a wrong articulation root had left every joint frozen.
