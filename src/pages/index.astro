@@ -27,7 +27,7 @@ const jsonLd = {
   url: new URL('/', Astro.site).href,
   sameAs: [site.linkedin, githubUrl].filter(Boolean),
   alumniOf: { '@type': 'CollegeOrUniversity', name: 'University of California, Los Angeles' },
-  knowsAbout: ['Computational fluid dynamics', 'Aerodynamics', 'Thermal systems', 'Battery cooling', 'CAD', 'Mechatronics', 'Robotics', 'Ansys Fluent', 'SolidWorks'],
+  knowsAbout: ['Computational fluid dynamics', 'Aerodynamics', 'CAD', 'Mechatronics', 'Robotics', 'Ansys Fluent', 'SolidWorks'],
 };
 ---
 <Base description={site.description} jsonLd={jsonLd}>
@@ -39,7 +39,7 @@ const jsonLd = {
         <h1 data-pagefind-meta="title:Mahatwa Kumar · Home">{site.name}</h1>
         <p class="headline">{site.headline}</p>
         <p class="lead">
-          I'm a Mechanical Engineering junior at UCLA working in CFD and aerodynamics, thermal and battery systems, CAD and mechatronics.
+          I'm a Mechanical Engineering junior at UCLA working in CFD and aerodynamics, CAD and mechatronics.
           On every project I show the set-up behind each result and how I checked it.
         </p>
         <div class="cta">

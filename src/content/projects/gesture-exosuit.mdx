@@ -95,6 +95,19 @@ This page covers the **design phase** (6 of 13 milestones). No prototype has bee
   caption="Simulated control cycle on the SolidWorks model. Chewing is ignored, and three teeth taps arm the brace. Head tilt then lifts, holds and lowers the forearm, and the brace disarms after 8 s without a command. The torque on the panel is static (arm plus a 0.5 kg cup); the tap thresholds are placeholders until real data is recorded."
 />
 
+The same control cycle, one step at a time (stills from the simulated demo):
+
+<Gallery label="Control cycle, step by step">
+  <Figure src="gesture-exosuit/step-01-disarmed-head-movement-ignored.png" alt="Demo frame: the brace is disarmed and a head turn is shown with no arm movement." caption="1. Disarmed: ordinary head movement is ignored." size="half" />
+  <Figure src="gesture-exosuit/step-02-chewing-ignored.png" alt="Demo frame: jaw movement from chewing is shown and the brace stays disarmed." caption="2. Chewing doesn't arm the brace." size="half" />
+  <Figure src="gesture-exosuit/step-03-three-teeth-taps-arm.png" alt="Demo frame: three tap spikes on the teeth-sensor trace and the status changes to Armed." caption="3. Three quick teeth taps arm it." size="half" />
+  <Figure src="gesture-exosuit/step-04-tilt-forward-lifts.png" alt="Demo frame: the head tilts forward and the forearm lifts, with the elbow angle rising." caption="4. Tilting the head forward lifts the forearm." size="half" />
+  <Figure src="gesture-exosuit/step-05-head-level-holds.png" alt="Demo frame: the head is level and the forearm holds its angle." caption="5. Holding the head level (within ±5°) holds the arm." size="half" />
+  <Figure src="gesture-exosuit/step-06-tilt-back-lowers.png" alt="Demo frame: the head tilts back and the forearm lowers." caption="6. Tilting the head back lowers it." size="half" />
+  <Figure src="gesture-exosuit/step-07-auto-disarm-after-8s.png" alt="Demo frame: the status returns to Disarmed after a period with no command." caption="7. With no command for 8 s, the brace disarms itself." size="half" />
+  <Figure src="gesture-exosuit/step-08-end-card.png" alt="Demo end card: Gesture-controlled elbow exosuit, 42-part SolidWorks assembly, 1.26× torque margin worst case." caption="8. End card: the 42-part SolidWorks design and its 1.26× worst-case torque margin." size="half" />
+</Gallery>
+
 <ProjectModel id="gesture-exosuit" caption="All 42 parts of revision B, placed as in the SolidWorks assembly with the elbow at 90°. Drag to rotate." />
 
 <Figure src="gesture-exosuit/architecture.png" alt="Block diagram: ear pod sends BLE commands to the ESP32-S3 controller, which drives the H-bridge and linear actuator; the force goes through a 4:1 pulley block and Bowden cable to the 50 mm elbow pulley; an ATtiny85 watchdog can cut motor power." caption="Signal and force path. The watchdog can cut motor power independently of the controller." />

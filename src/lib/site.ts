@@ -2,9 +2,9 @@
 export const site = {
   name: 'Mahatwa Kumar',
   title: 'Mahatwa Kumar · Mechanical Engineering',
-  headline: 'Mechanical engineering student designing with simulation: CFD, thermal systems and robotics',
+  headline: 'Mechanical engineering student designing with simulation: CFD, aerodynamics and robotics',
   description:
-    'Portfolio of Mahatwa Kumar, Mechanical Engineering junior at UCLA: CFD and aerodynamics, thermal and battery systems, CAD, mechatronics and robotics.',
+    'Portfolio of Mahatwa Kumar, Mechanical Engineering junior at UCLA: CFD and aerodynamics, CAD, mechatronics and robotics.',
   email: 'mahatwa1856@g.ucla.edu',
   linkedin: 'https://www.linkedin.com/in/mahatwakumar',
   githubUser: 'MahatwaKumar',
@@ -17,7 +17,6 @@ export const githubUrl = site.githubUser ? `https://github.com/${site.githubUser
 export const filters = [
   { id: 'all', label: 'All' },
   { id: 'cfd', label: 'CFD' },
-  { id: 'thermal', label: 'Thermal' },
   { id: 'cad', label: 'CAD' },
   { id: 'embedded', label: 'Embedded' },
   { id: 'robotics', label: 'Robotics' },
@@ -42,7 +41,6 @@ export const aboutMe = {
       title: 'What I work on',
       points: [
         'External aerodynamics in Ansys Fluent: an F1-style car and an EV, meshed in Fluent Meshing',
-        'Thermal design: a liquid-cooled battery cold plate and the bench rig to test it',
         'Mechanical design in SolidWorks and Fusion 360: a robotic arm, an assistive exosuit and an acoustic metamaterial',
         'Physics-based models that turn simulation results into lap time, range or joint torque',
       ],

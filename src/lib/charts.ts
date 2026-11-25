@@ -9,16 +9,10 @@ import f1Hist from '../data/f1-car-aerodynamics-cfd/cfd_v4_force_history.csv?raw
 import evSweep from '../data/ev-aerodynamics-range/phase4_sweep.csv?raw';
 import evRank from '../data/ev-aerodynamics-range/phase5_ranking.csv?raw';
 import evMesh from '../data/ev-aerodynamics-range/phase3_mesh_independence.csv?raw';
-import cpSweep from '../data/ev-battery-cold-plate/cfd_design_sweep_36_points.csv?raw';
-import cpMesh from '../data/ev-battery-cold-plate/cfd_mesh_independence_serpentine.csv?raw';
 import ltLoss from '../data/f1-dirty-air-lap-time-model/model_mean_loss_curves.csv?raw';
 import ltDev from '../data/f1-dirty-air-lap-time-model/model_development_scores.csv?raw';
 import ltStall from '../data/f1-dirty-air-lap-time-model/model_stall_forecast_test.csv?raw';
 import ltBase from '../data/f1-dirty-air-lap-time-model/model_baselines_earlier_version.csv?raw';
-import wfPla from '../data/wingflex/aeroelastic_pla_print.csv?raw';
-import wfCf from '../data/wingflex/aeroelastic_cf_nylon_print.csv?raw';
-import wfSweep from '../data/wingflex/design_sweep.csv?raw';
-import wfAero from '../data/wingflex/aero_baseline.csv?raw';
 import icTorque from '../data/iris-claw/joint_torques.csv?raw';
 import icMass from '../data/iris-claw/mass_summary.csv?raw';
 import exTorque from '../data/gesture-exosuit/elbow_torque_vs_angle.csv?raw';
@@ -88,22 +82,11 @@ const rank = parseCsv(evRank).filter((r) => r.config);
 const meshRows = parseCsv(evMesh);
 const cda = meshRows.find((r) => r.quantity === 'cda_m2')!;
 
-/* -------------------------------- Cold plate -------------------------------- */
-const cp = parseCsv(cpSweep);
-const designs = [['serpentine', 'Serpentine', 'c1'], ['parallel_z', 'Parallel Z', 'c2'], ['pin_fin', 'Pin-fin', 'c3']] as const;
-const at10 = (d: string) => cp.filter((r) => r.design === d && r.heat_per_cell_W === '10');
-const cpm = parseCsv(cpMesh).find((r) => r.quantity === 'T_max_C')!;
-
 /* ------------------------------- Lap-time model ----------------------------- */
 const loss = parseCsv(ltLoss);
 const dev = parseCsv(ltDev).sort((a, b) => num(b.S_skill) - num(a.S_skill));
 const stall = parseCsv(ltStall);
 const bases = parseCsv(ltBase);
-
-/* --------------------------------- Wingflex --------------------------------- */
-const pla = parseCsv(wfPla); const cf = parseCsv(wfCf);
-const wsw = parseCsv(wfSweep);
-const aero = parseCsv(wfAero).filter((r) => r.h_over_c !== 'inf');
 
 /* ------------------------------ Iris / Exosuit ------------------------------ */
 const tq = parseCsv(icTorque);
@@ -170,35 +153,6 @@ export const charts: Record<string, ChartSpec> = {
     source: 'phase3_mesh_independence.csv',
   },
 
-  'cp-tmax-pump': {
-    kind: 'scatter', logX: true, xLabel: 'Pump electrical power (W, log scale)', yLabel: 'Max cell temperature (°C)', unit: '°C', xUnit: 'W', decimals: 2,
-    refLine: undefined,
-    datasets: designs.map(([d, label, color]) => ({ label, color, showLine: true, pointRadius: 4, data: at10(d).map((r) => ({ x: round(num(r.P_elec_system_W), 4), y: round(num(r.T_max_C), 2) })) })),
-    table: { head: ['Design', 'Flow (L/min)', 'Pump power (W)', 'T_max (°C)', 'Plate Δp (Pa)'], rows: designs.flatMap(([d, label]) => at10(d).map((r) => [label, r.flow_Lpm, round(num(r.P_elec_system_W), 3), round(num(r.T_max_C), 2), round(num(r.dp_plate_Pa), 0)])) },
-    source: 'cfd_design_sweep_36_points.csv (10 W per cell, 22 °C inlet)',
-  },
-  'cp-dp-flow': {
-    kind: 'scatter', logY: true, xLabel: 'Coolant flow (L/min)', yLabel: 'Plate pressure drop (Pa, log scale)', unit: 'Pa', xUnit: 'L/min', decimals: 0,
-    datasets: [
-      ...designs.map(([d, label, color]) => ({ label: `${label} (CFD)`, color, showLine: true, pointRadius: 4, data: at10(d).map((r) => ({ x: num(r.flow_Lpm), y: round(num(r.dp_plate_Pa), 0) })) })),
-      ...designs.map(([d, label, color]) => ({ label: `${label} (hand calc)`, color, dashed: true, showLine: true, pointRadius: 0, data: at10(d).map((r) => ({ x: num(r.flow_Lpm), y: round(num(r.hand_dp_plate_Pa), 0) })) })),
-    ],
-    table: { head: ['Design', 'Flow (L/min)', 'CFD Δp (Pa)', 'Hand calc Δp (Pa)'], rows: designs.flatMap(([d, label]) => at10(d).map((r) => [label, r.flow_Lpm, round(num(r.dp_plate_Pa), 0), round(num(r.hand_dp_plate_Pa), 0)])) },
-    source: 'cfd_design_sweep_36_points.csv',
-  },
-  'cp-spread': {
-    kind: 'scatter', xLabel: 'Coolant flow (L/min)', yLabel: 'Cell-to-cell spread (K)', unit: 'K', xUnit: 'L/min', decimals: 2, yMin: 0,
-    datasets: designs.map(([d, label, color]) => ({ label, color, showLine: true, pointRadius: 4, data: at10(d).map((r) => ({ x: num(r.flow_Lpm), y: round(num(r.dT_cells_K), 2) })) })),
-    table: { head: ['Design', 'Flow (L/min)', 'Spread at 10 W/cell (K)'], rows: designs.flatMap(([d, label]) => at10(d).map((r) => [label, r.flow_Lpm, round(num(r.dT_cells_K), 2)])) },
-    source: 'cfd_design_sweep_36_points.csv',
-  },
-  'cp-mesh': {
-    kind: 'line', xLabel: 'Mesh size (thousand cells)', yLabel: 'Max cell temperature (°C)', unit: '°C', decimals: 3, yMin: 26.0, yMax: 26.5,
-    datasets: [{ label: 'Serpentine baseline T_max', color: 'c1', pointRadius: 5, data: [[cpm.cells_coarse, cpm.coarse], [cpm.cells_medium, cpm.medium], [cpm.cells_fine, cpm.fine]].map(([c, v]) => ({ x: round(num(c) / 1000, 0), y: round(num(v), 3) })) }],
-    table: { head: ['Mesh', 'Cells', 'T_max (°C)'], rows: [['Coarse', cpm.cells_coarse, round(num(cpm.coarse), 3)], ['Medium', cpm.cells_medium, round(num(cpm.medium), 3)], ['Fine', cpm.cells_fine, round(num(cpm.fine), 3)]] },
-    source: 'cfd_mesh_independence_serpentine.csv',
-  },
-
   'lt-loss': {
     kind: 'line', xLabel: 'Gap to the car ahead (s)', yLabel: 'Time lost per lap (s)', unit: 's', xUnit: 's', decimals: 3, yMin: 0,
     datasets: [
@@ -232,44 +186,6 @@ export const charts: Record<string, ChartSpec> = {
     datasets: [{ label: 'Mean S (earlier model version)', color: 'c1', data: bases.map((r) => round(num(r.mean_S), 3)) }],
     table: { head: ['Baseline', 'Mean S', 'Circuits with S ≥ 0.5', 'Fitted numbers'], rows: bases.map((r) => [r.description, round(num(r.mean_S), 3), r.circuits_S_ge_0_5 ?? r['circuits_S_ge_0.5'], r.fitted_numbers]) },
     source: 'model_baselines_earlier_version.csv',
-  },
-
-  'wf-deflection': {
-    kind: 'line', xLabel: 'Air speed (m/s)', yLabel: 'Trailing-edge deflection, mid-span (mm)', unit: 'mm', xUnit: 'm/s', decimals: 3, yMin: 0,
-    datasets: [
-      { label: 'PLA (E = 3.0 GPa placeholder)', color: 'c2', pointRadius: 4, data: pla.map((r) => ({ x: num(r.V_mps), y: round(num(r.te_defl_mm), 3) })) },
-      { label: 'CF-nylon (E = 4.15 GPa datasheet)', color: 'c1', pointRadius: 4, data: cf.map((r) => ({ x: num(r.V_mps), y: round(num(r.te_defl_mm), 3) })) },
-    ],
-    table: { head: ['Speed (m/s)', 'Downforce, flexible PLA (N)', 'TE deflection PLA (mm)', 'TE deflection CF-nylon (mm)', 'Flex effect PLA (%)'], rows: pla.map((r, i) => [r.V_mps, round(num(r.downforce_flex_N), 2), round(num(r.te_defl_mm), 3), round(num(cf[i].te_defl_mm), 3), round(num(r.dCL_pct), 3)]) },
-    source: 'aeroelastic_pla_print.csv, aeroelastic_cf_nylon_print.csv',
-  },
-  'wf-flex': {
-    kind: 'line', xLabel: 'Air speed (m/s)', yLabel: 'Change in downforce from flex (%)', unit: '%', xUnit: 'm/s', decimals: 3, yMin: 0,
-    datasets: [
-      { label: 'PLA', color: 'c2', pointRadius: 4, data: pla.map((r) => ({ x: num(r.V_mps), y: round(num(r.dCL_pct), 3) })) },
-      { label: 'CF-nylon', color: 'c1', pointRadius: 4, data: cf.map((r) => ({ x: num(r.V_mps), y: round(num(r.dCL_pct), 3) })) },
-    ],
-    table: { head: ['Speed (m/s)', 'Flex effect PLA (%)', 'Flex effect CF-nylon (%)'], rows: pla.map((r, i) => [r.V_mps, round(num(r.dCL_pct), 3), round(num(cf[i].dCL_pct), 3)]) },
-    source: 'aeroelastic_pla_print.csv, aeroelastic_cf_nylon_print.csv',
-  },
-  'wf-sweep': {
-    kind: 'scatter', xLabel: 'Predicted printed mass (g)', yLabel: 'TE deflection in scaled FIA test (mm)', unit: 'mm', xUnit: 'g', decimals: 3, yMin: 0, yMax: 4.4,
-    refLine: { value: 4.0, label: 'scaled FIA limit 4.0 mm', axis: 'y' },
-    datasets: [
-      { label: 'PLA designs', color: 'c2', pointRadius: 5, data: wsw.filter((r) => r.material === 'pla_print').map((r) => ({ x: round(num(r.mass_g), 1), y: round(num(r.fia_te_mm), 3) })) },
-      { label: 'CF-nylon designs', color: 'c1', pointRadius: 5, data: wsw.filter((r) => r.material === 'cf_nylon_print').map((r) => ({ x: round(num(r.mass_g), 1), y: round(num(r.fia_te_mm), 3) })) },
-    ],
-    table: { head: ['Material', 'Walls', 'Infill', 'Mass (g)', 'FIA-test TE deflection (mm)', 'Flex effect at 80 m/s (%)'], rows: wsw.map((r) => [r.material === 'pla_print' ? 'PLA' : 'CF-nylon', r.n_walls, `${round(num(r.infill) * 100, 0)} %`, round(num(r.mass_g), 1), round(num(r.fia_te_mm), 3), round(num(r.dCL_pct_80), 3)]) },
-    source: 'design_sweep.csv',
-  },
-  'wf-ground': {
-    kind: 'scatter', logX: true, xLabel: 'Ride height h/c (log scale)', yLabel: 'Downforce coefficient −Cl (2D, inviscid)', unit: '', decimals: 2, yMin: 0,
-    datasets: ['4', '8', '12'].map((inc, i) => ({
-      label: `${inc}° incidence`, color: (['c3', 'c1', 'c4'] as const)[i], showLine: true, pointRadius: 3,
-      data: aero.filter((r) => r.incidence_deg === inc).map((r) => ({ x: num(r.h_over_c), y: round(-num(r.cl), 3) })),
-    })),
-    table: { head: ['h/c', '−Cl at 4°', '−Cl at 8°', '−Cl at 12°'], rows: [...new Set(aero.map((r) => r.h_over_c))].map((h) => [h, ...['4', '8', '12'].map((inc) => round(-num(aero.find((r) => r.h_over_c === h && r.incidence_deg === inc)?.cl), 3))]) },
-    source: 'aero_baseline.csv',
   },
 
   'ic-torque': {
